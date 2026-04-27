@@ -160,19 +160,23 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
     setSaveStatus('idle');
     try {
       const columnKey = `${selectedMetric.prefix}_q${selectedQuarter}_${selectedYear}`;
+      const BATCH_SIZE = 10;
 
-      const updates = companies.map(company => {
-        const rawValue = values[company.id];
-        const numValue = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
-        return { id: company.id, value: numValue };
-      });
+      for (let i = 0; i < companies.length; i += BATCH_SIZE) {
+        const batch = companies.slice(i, i + BATCH_SIZE);
+        const batchPromises = batch.map(company => {
+          const rawValue = values[company.id];
+          const numValue = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
+          return supabase
+            .from('company_data')
+            .update({ [columnKey]: numValue, updated_at: new Date().toISOString() })
+            .eq('id', company.id);
+        });
 
-      const { data, error } = await supabase.rpc('bulk_update_company_metric', {
-        p_column_key: columnKey,
-        p_updates: JSON.stringify(updates),
-      });
-
-      if (error) throw new Error(error.message);
+        const results = await Promise.all(batchPromises);
+        const failed = results.find(r => r.error);
+        if (failed?.error) throw new Error(failed.error.message);
+      }
 
       setSaveStatus('success');
       onDataSaved?.();
@@ -404,3 +408,5 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
     </div>
   );
 }
+
+export default LPDataEntry
