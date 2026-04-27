@@ -13,6 +13,7 @@ interface Profile {
 interface AuthState {
   user: Profile | null;
   loading: boolean;
+  signingIn: boolean;
   setUser: (user: Profile | null) => void;
   setLoading: (loading: boolean) => void;
   initializeAuth: () => Promise<void>;
@@ -21,9 +22,10 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
+  signingIn: false,
   setUser: (user) => set({ user }),
   setLoading: (loading) => set({ loading }),
 
@@ -42,58 +44,66 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     }
 
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (get().signingIn) return;
+
       if (event === 'SIGNED_OUT') {
         set({ user: null });
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      } else if (event === 'TOKEN_REFRESHED') {
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
+          (async () => {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
 
-          if (profile) {
-            set({ user: profile });
-          }
+            if (profile) {
+              set({ user: profile });
+            }
+          })();
         }
       }
     });
   },
 
   signIn: async (email, password) => {
-    await supabase.auth.signOut({ scope: 'global' });
-    await new Promise(resolve => setTimeout(resolve, 100));
+    set({ signingIn: true });
 
-    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-login`;
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ email, password }),
-    });
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-login`;
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Invalid login credentials');
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Invalid login credentials');
+      }
+
+      const { profile } = await response.json();
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) throw signInError;
+
+      set({ user: profile, signingIn: false });
+      return profile;
+    } catch (err) {
+      set({ signingIn: false });
+      throw err;
     }
-
-    const { profile } = await response.json();
-
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError) throw signInError;
-
-    set({ user: profile });
-    return profile;
   },
 
   signUp: async (email, password, data) => {
@@ -125,5 +135,4 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null });
     window.location.href = '/auth';
   },
-
 }));

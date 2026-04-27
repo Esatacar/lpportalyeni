@@ -2,7 +2,6 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useAuthSecurity } from './hooks/useAuthSecurity';
-import { supabase } from './lib/supabase';
 
 // Lazy load pages
 const Auth = React.lazy(() => import('./pages/Auth'));
@@ -22,41 +21,9 @@ const LoadingScreen = () => (
 );
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, signOut } = useAuthStore();
-  const [validating, setValidating] = React.useState(true);
+  const { user, loading } = useAuthStore();
 
-  React.useEffect(() => {
-    const validateSession = async () => {
-      if (!user) {
-        setValidating(false);
-        return;
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        signOut();
-        return;
-      }
-
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (error || !profile) {
-        signOut();
-        return;
-      }
-
-      setValidating(false);
-    };
-
-    validateSession();
-  }, [user, signOut]);
-
-  if (validating) {
+  if (loading) {
     return <LoadingScreen />;
   }
 
