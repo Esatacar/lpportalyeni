@@ -12,7 +12,7 @@ const LP_METRICS = [
   { label: 'Realized Gains', prefix: 'realized_gains' },
 ];
 
-const YEARS = [2025, 2024, 2023, 2022, 2021];
+const YEARS = [2026, 2025, 2024, 2023, 2022, 2021];
 const QUARTERS = [1, 2, 3, 4];
 
 interface CompanyRow {

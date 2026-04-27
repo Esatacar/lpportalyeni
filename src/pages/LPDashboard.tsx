@@ -55,7 +55,7 @@ interface QuarterOption {
 }
 
 // Define available years and quarters
-const years = [2025, 2024, 2023, 2022, 2021];
+const years = [2026, 2025, 2024, 2023, 2022, 2021];
 const regularQuarters = [4, 3, 2, 1]; // All quarters for other years
 
 // Function to get available quarters for a given year based on actual data

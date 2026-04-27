@@ -59,7 +59,7 @@ export default function AccountDetails({
   const { settings, updateSettings } = useGlobalViewSettings();
   
   // Generate quarter options dynamically based on actual data
-  const years = [2025, 2024, 2023, 2022, 2021];
+  const years = [2026, 2025, 2024, 2023, 2022, 2021];
   const quarterOptions = React.useMemo(() => {
     const options: Array<{
       year: number;

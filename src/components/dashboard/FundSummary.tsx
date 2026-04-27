@@ -30,7 +30,7 @@ function findLatestQuarterWithData(fundLevelData: any): { year: number; quarter:
   }
 
   // Start from latest possible quarter and work backwards
-  const years = [2025, 2024, 2023, 2022, 2021];
+  const years = [2026, 2025, 2024, 2023, 2022, 2021];
 
   for (const year of years) {
     // Check all possible quarters for each year

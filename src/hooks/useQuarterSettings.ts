@@ -24,7 +24,7 @@ export function useQuarterSettings(key: string, defaultQuarter: QuarterSetting) 
 }
 
 export function findLatestQuarter(data: any[], prefix: string = 'total_investment'): QuarterSetting {
-  const years = [2025, 2024, 2023, 2022, 2021];
+  const years = [2026, 2025, 2024, 2023, 2022, 2021];
   const quarters = [4, 3, 2, 1];
 
   // Get current date
@@ -38,8 +38,8 @@ export function findLatestQuarter(data: any[], prefix: string = 'total_investmen
   let startQuarter = currentQuarter;
 
   // If current year is beyond our range, start from latest available
-  if (currentYear > 2025) {
-    startYear = 2025;
+  if (currentYear > 2026) {
+    startYear = 2026;
     startQuarter = 4;
   }
 
@@ -60,7 +60,7 @@ export function findLatestQuarter(data: any[], prefix: string = 'total_investmen
 
   // If no data found, return current quarter (or latest available)
   return {
-    year: Math.min(Math.max(currentYear, 2021), 2025),
+    year: Math.min(Math.max(currentYear, 2021), 2026),
     quarter: Math.min(currentQuarter, 4)
   };
 }

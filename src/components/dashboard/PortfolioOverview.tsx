@@ -78,7 +78,7 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
     }).format(value);
   };
 
-  const years = [2025, 2024, 2023, 2022, 2021];
+  const years = [2026, 2025, 2024, 2023, 2022, 2021];
 
   const handleQuarterSelection = async (year: number, quarter: number) => {
     await updateSettings({

@@ -19,7 +19,7 @@ async function findLatestQuarter() {
     if (error) throw error;
     
     // Years and quarters in descending order for latest-first search
-    const years = [2025, 2024, 2023, 2022, 2021];
+    const years = [2026, 2025, 2024, 2023, 2022, 2021];
     const quarters = [4, 3, 2, 1];
     
     // Find the latest quarter with data by checking all relevant fields
@@ -47,7 +47,7 @@ async function findLatestQuarter() {
     
     // If no data found, return current quarter (limited to our date range)
     const currentDate = new Date();
-    const currentYear = Math.min(Math.max(currentDate.getFullYear(), 2021), 2025);
+    const currentYear = Math.min(Math.max(currentDate.getFullYear(), 2021), 2026);
     const currentQuarter = Math.min(Math.ceil((currentDate.getMonth() + 1) / 3), 4);
     
     console.log(`No data found, using current quarter: Q${currentQuarter} ${currentYear}`);
@@ -59,7 +59,7 @@ async function findLatestQuarter() {
     console.error('Error finding latest quarter:', error);
     // Fallback to current quarter
     const currentDate = new Date();
-    const currentYear = Math.min(Math.max(currentDate.getFullYear(), 2021), 2025);
+    const currentYear = Math.min(Math.max(currentDate.getFullYear(), 2021), 2026);
     const currentQuarter = Math.min(Math.ceil((currentDate.getMonth() + 1) / 3), 4);
     
     return {
@@ -80,7 +80,7 @@ async function findLatestFourQuarters() {
     if (error) throw error;
     
     const quarters: string[] = [];
-    const years = [2025, 2024, 2023, 2022, 2021];
+    const years = [2026, 2025, 2024, 2023, 2022, 2021];
     const quartersInYear = [4, 3, 2, 1];
     
     // Find the latest 4 quarters with data
@@ -118,7 +118,7 @@ async function findLatestFourQuarters() {
     
     // Fallback to current and previous 3 quarters if no data found
     const currentDate = new Date();
-    let year = Math.min(Math.max(currentDate.getFullYear(), 2021), 2025);
+    let year = Math.min(Math.max(currentDate.getFullYear(), 2021), 2026);
     let quarter = Math.min(Math.ceil((currentDate.getMonth() + 1) / 3), 4);
     
     const fallbackQuarters: string[] = [];
@@ -138,7 +138,7 @@ async function findLatestFourQuarters() {
     console.error('Error finding latest quarters:', error);
     // Fallback to current and previous 3 quarters
     const currentDate = new Date();
-    let year = Math.min(Math.max(currentDate.getFullYear(), 2021), 2025);
+    let year = Math.min(Math.max(currentDate.getFullYear(), 2021), 2026);
     let quarter = Math.min(Math.ceil((currentDate.getMonth() + 1) / 3), 4);
     
     const fallbackQuarters: string[] = [];
