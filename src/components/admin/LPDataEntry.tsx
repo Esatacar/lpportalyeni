@@ -39,6 +39,7 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
   const [showQuarterDropdown, setShowQuarterDropdown] = useState(false);
   const [showMetricDropdown, setShowMetricDropdown] = useState(false);
   const [pasteTarget, setPasteTarget] = useState<string | null>(null);
+  const [pasteCount, setPasteCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -109,11 +110,25 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
     }
   };
 
+  const parseExcelValue = (raw: string): string => {
+    let s = raw.trim();
+    s = s.replace(/^[\s"']+|[\s"']+$/g, '');
+    s = s.replace(/[\u20AC$\u00A3\u00A5,\s]/g, '');
+    s = s.replace(/\./g, '_DOT_').replace(/,/g, '.').replace(/_DOT_/g, '.');
+    if (s === '' || s === '-') return '';
+    if (/^-?\d*\.?\d+$/.test(s)) return s;
+    return '';
+  };
+
   const handlePaste = useCallback((e: React.ClipboardEvent, startCompanyId: string) => {
     const pastedText = e.clipboardData.getData('text');
-    const pastedLines = pastedText.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
+    const lines = pastedText
+      .split(/[\r\n]+/)
+      .map(line => line.split('\t')[0])
+      .map(cell => cell.trim())
+      .filter(cell => cell !== '');
 
-    if (pastedLines.length <= 1) return;
+    if (lines.length <= 1) return;
 
     e.preventDefault();
 
@@ -121,20 +136,21 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
     if (startIndex === -1) return;
 
     const newValues = { ...values };
-    pastedLines.forEach((line, i) => {
+    let filledCount = 0;
+    lines.forEach((line, i) => {
       const targetIndex = startIndex + i;
       if (targetIndex < companies.length) {
-        const cleaned = line.replace(/[^0-9.\-]/g, '');
-        if (cleaned === '' || /^-?\d*\.?\d*$/.test(cleaned)) {
-          newValues[companies[targetIndex].id] = cleaned;
-        }
+        const parsed = parseExcelValue(line);
+        newValues[companies[targetIndex].id] = parsed;
+        filledCount++;
       }
     });
 
     setValues(newValues);
     setSaveStatus('idle');
     setPasteTarget(startCompanyId);
-    setTimeout(() => setPasteTarget(null), 1500);
+    setPasteCount(filledCount);
+    setTimeout(() => { setPasteTarget(null); setPasteCount(0); }, 2500);
   }, [companies, values]);
 
   const handleSave = async () => {
@@ -271,12 +287,25 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
         </div>
       </div>
 
-      {/* Paste hint */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-lg">
-        <ClipboardPaste className="h-4 w-4 text-blue-500 shrink-0" />
-        <p className="text-xs text-blue-700">
-          Paste multiple values from a spreadsheet column -- click any input field and paste. Values will fill downward from that row.
-        </p>
+      {/* Paste hint / feedback */}
+      <div className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg transition-colors ${
+        pasteCount > 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-blue-50 border-blue-100'
+      }`}>
+        {pasteCount > 0 ? (
+          <>
+            <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+            <p className="text-xs text-emerald-700 font-medium">
+              Pasted {pasteCount} values successfully. Click "Save All" to persist.
+            </p>
+          </>
+        ) : (
+          <>
+            <ClipboardPaste className="h-4 w-4 text-blue-500 shrink-0" />
+            <p className="text-xs text-blue-700">
+              Copy a column from Excel, click the first input field, then Ctrl+V / Cmd+V. Values fill downward automatically. Supports up to {companies.length} rows.
+            </p>
+          </>
+        )}
       </div>
 
       {/* Bulk entry table */}
