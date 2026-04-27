@@ -164,27 +164,15 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
       const updates = companies.map(company => {
         const rawValue = values[company.id];
         const numValue = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
-        return supabase
-          .from('company_data')
-          .update({
-            [columnKey]: numValue,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', company.id)
-          .select('id');
+        return { id: company.id, value: numValue };
       });
 
-      const results = await Promise.all(updates);
-      const hasError = results.some(r => r.error);
-      if (hasError) {
-        const firstError = results.find(r => r.error);
-        throw new Error(firstError?.error?.message || 'Some updates failed');
-      }
+      const { data, error } = await supabase.rpc('bulk_update_company_metric', {
+        p_column_key: columnKey,
+        p_updates: JSON.stringify(updates),
+      });
 
-      const allEmpty = results.every(r => !r.data || r.data.length === 0);
-      if (allEmpty && companies.length > 0) {
-        throw new Error('No rows were updated. You may need to sign out and sign back in.');
-      }
+      if (error) throw new Error(error.message);
 
       setSaveStatus('success');
       onDataSaved?.();
@@ -416,3 +404,6 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
     </div>
   );
 }
+
+
+export default LPDataEntry
