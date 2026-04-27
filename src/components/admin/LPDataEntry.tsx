@@ -404,6 +404,3 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
     </div>
   );
 }
-
-
-export default LPDataEntry
