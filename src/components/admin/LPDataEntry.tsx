@@ -27,7 +27,7 @@ interface LPDataEntryProps {
   availableYears?: number[];
 }
 
-function LPDataEntry({ onDataSaved, availableYears }: LPDataEntryProps) {
+export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntryProps) {
   const YEARS = availableYears && availableYears.length > 0 ? availableYears : DEFAULT_YEARS;
   const [selectedYear, setSelectedYear] = useState(2025);
   const [selectedQuarter, setSelectedQuarter] = useState(1);
@@ -402,7 +402,3 @@ function LPDataEntry({ onDataSaved, availableYears }: LPDataEntryProps) {
     </div>
   );
 }
-
-export default LPDataEntry
-
-export default LPDataEntry
