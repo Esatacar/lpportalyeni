@@ -5,6 +5,6 @@ export const accountMetrics = [
   { label: 'OPEX', prefix: 'opex' },
   { label: 'Unrealized Gains', prefix: 'unrealized_gains' },
   { label: 'Realized Gains', prefix: 'realized_gains' },
-  { label: 'NAV', prefix: 'nav' },
-  { label: 'Carried Interest (GP)', prefix: 'carried_interest_gp' }
+  { label: 'Carried Interest (GP)', prefix: 'carried_interest_gp' },
+  { label: 'NAV', prefix: 'nav' }
 ];

@@ -94,7 +94,8 @@ async function findLatestFourQuarters() {
           'opex',
           'distributions',
           'unrealized_gains',
-          'realized_gains'
+          'realized_gains',
+          'carried_interest_gp'
         ].some(metric => {
           const value = companyData[`${metric}_q${quarter}_${year}`];
           return value !== null && value !== undefined && value !== 0;
