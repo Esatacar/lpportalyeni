@@ -130,10 +130,12 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
   const parseExcelValue = (raw: string): string => {
     let s = raw.trim();
     s = s.replace(/^[\s"']+|[\s"']+$/g, '');
-    s = s.replace(/[\u20AC$\u00A3\u00A5,\s]/g, '');
-    s = s.replace(/\./g, '_DOT_').replace(/,/g, '.').replace(/_DOT_/g, '.');
+    const isNegative = /^\(.*\)$/.test(s) || /^[-\u2212\u2013]/.test(s);
+    s = s.replace(/[()\u2212\u2013]/g, '');
+    s = s.replace(/[\u20AC$\u00A3\u00A5\s]/g, '');
+    s = s.replace(/,/g, '');
     if (s === '' || s === '-') return '';
-    if (/^-?\d*\.?\d+$/.test(s)) return s;
+    if (/^\d*\.?\d+$/.test(s)) return isNegative ? '-' + s : s;
     return '';
   };
 
