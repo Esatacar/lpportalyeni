@@ -6,6 +6,7 @@ import Logo from '../components/Logo';
 import FundSummary from '../components/dashboard/FundSummary';
 import UsefulLinks from '../components/dashboard/UsefulLinks';
 import LinkDialog from '../components/dashboard/LinkDialog';
+import QuarterlyDataManager from '../components/admin/QuarterlyDataManager';
 import { useUsefulLinks } from '../hooks/useUsefulLinks';
 
 interface CompanyData {
@@ -524,6 +525,8 @@ export default function AdminDashboard() {
           quarters={quarters}
           getValue={getValue}
         />
+
+        <QuarterlyDataManager onDataSaved={() => fetchFundLevelData()} />
 
         <UsefulLinks
           links={usefulLinks}
