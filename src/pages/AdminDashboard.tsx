@@ -220,6 +220,7 @@ export default function AdminDashboard() {
           .from('profiles')
           .select('*')
           .eq('role', 'lp')
+          .neq('status', 'rejected')
           .order('created_at', { ascending: false })
       );
       
