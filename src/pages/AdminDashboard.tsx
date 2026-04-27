@@ -52,19 +52,27 @@ async function retryOperation<T>(
   }
 }
 
+function getYearsFromData(fundLevelData: FundLevelData | null): number[] {
+  if (!fundLevelData) return [2026, 2025, 2024, 2023, 2022, 2021];
+  const yearSet = new Set<number>();
+  for (const key of Object.keys(fundLevelData)) {
+    const match = key.match(/_q\d_(\d{4})$/);
+    if (match) yearSet.add(parseInt(match[1], 10));
+  }
+  if (yearSet.size === 0) return [2026, 2025, 2024, 2023, 2022, 2021];
+  return Array.from(yearSet).sort((a, b) => b - a);
+}
+
 function findLatestQuarterWithData(fundLevelData: FundLevelData | null): { year: number; quarter: number } {
   if (!fundLevelData) {
     return { year: 2026, quarter: 1 };
   }
 
-  const years = [2026, 2025, 2024, 2023, 2022, 2021];
+  const years = getYearsFromData(fundLevelData);
   const quarters = [4, 3, 2, 1];
 
   for (const year of years) {
-    // Check all quarters for each year
-    const availableQuarters = quarters;
-    
-    for (const quarter of availableQuarters) {
+    for (const quarter of quarters) {
       const hasData = Object.keys(fundLevelData).some(key => {
         if (key.endsWith(`_q${quarter}_${year}`)) {
           const value = fundLevelData[key];
@@ -456,7 +464,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const years = [2026, 2025, 2024, 2023, 2022, 2021];
+  const years = getYearsFromData(fundLevelData);
   const quarters = [4, 3, 2, 1];
 
   if (loading) {

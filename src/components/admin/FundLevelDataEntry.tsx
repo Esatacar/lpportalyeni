@@ -15,14 +15,16 @@ const FUND_METRICS = [
   { label: 'OPEX', prefix: 'opex', type: 'currency' },
 ];
 
-const YEARS = [2026, 2025, 2024, 2023, 2022, 2021];
+const DEFAULT_YEARS = [2026, 2025, 2024, 2023, 2022, 2021];
 const QUARTERS = [1, 2, 3, 4];
 
 interface FundLevelDataEntryProps {
   onDataSaved?: () => void;
+  availableYears?: number[];
 }
 
-export default function FundLevelDataEntry({ onDataSaved }: FundLevelDataEntryProps) {
+export default function FundLevelDataEntry({ onDataSaved, availableYears }: FundLevelDataEntryProps) {
+  const YEARS = availableYears && availableYears.length > 0 ? availableYears : DEFAULT_YEARS;
   const [selectedYear, setSelectedYear] = useState(2025);
   const [selectedQuarter, setSelectedQuarter] = useState(1);
   const [formData, setFormData] = useState<Record<string, string>>({});
