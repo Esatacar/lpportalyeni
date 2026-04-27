@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Check, AlertCircle, ChevronDown, Search } from 'lucide-react';
+import { Save, Check, AlertCircle, ChevronDown, ClipboardPaste } from 'lucide-react';
 
 const LP_METRICS = [
   { label: 'Paid Capital', prefix: 'paid_capital' },
@@ -20,7 +20,6 @@ interface CompanyRow {
   company_no: string;
   company_name: string;
   total_commitment: number;
-  [key: string]: any;
 }
 
 interface LPDataEntryProps {
@@ -30,23 +29,25 @@ interface LPDataEntryProps {
 export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
   const [selectedYear, setSelectedYear] = useState(2025);
   const [selectedQuarter, setSelectedQuarter] = useState(1);
+  const [selectedMetric, setSelectedMetric] = useState(LP_METRICS[0]);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Record<string, string>>({});
-  const [totalCommitment, setTotalCommitment] = useState('');
+  const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [showQuarterDropdown, setShowQuarterDropdown] = useState(false);
+  const [showMetricDropdown, setShowMetricDropdown] = useState(false);
+  const [pasteTarget, setPasteTarget] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowYearDropdown(false);
         setShowQuarterDropdown(false);
+        setShowMetricDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -58,10 +59,10 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
   }, []);
 
   useEffect(() => {
-    if (selectedCompanyId) {
-      loadCompanyData();
+    if (companies.length > 0) {
+      loadMetricValues();
     }
-  }, [selectedCompanyId, selectedYear, selectedQuarter]);
+  }, [companies, selectedYear, selectedQuarter, selectedMetric]);
 
   const loadCompanies = async () => {
     try {
@@ -72,81 +73,91 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
 
       if (error) throw error;
       setCompanies(data || []);
-      if (data && data.length > 0 && !selectedCompanyId) {
-        setSelectedCompanyId(data[0].id);
-      }
     } catch (err) {
       console.error('Error loading companies:', err);
     }
   };
 
-  const loadCompanyData = async () => {
-    if (!selectedCompanyId) return;
+  const loadMetricValues = async () => {
     setLoading(true);
     try {
+      const columnKey = `${selectedMetric.prefix}_q${selectedQuarter}_${selectedYear}`;
       const { data, error } = await supabase
         .from('company_data')
-        .select('*')
-        .eq('id', selectedCompanyId)
-        .maybeSingle();
+        .select(`id, ${columnKey}`)
+        .order('company_no', { ascending: true });
 
       if (error) throw error;
 
-      if (data) {
-        setTotalCommitment(data.total_commitment ? data.total_commitment.toString() : '');
-        const suffix = `_q${selectedQuarter}_${selectedYear}`;
-        const values: Record<string, string> = {};
-        LP_METRICS.forEach(metric => {
-          const key = `${metric.prefix}${suffix}`;
-          const rawValue = data[key];
-          if (rawValue !== null && rawValue !== undefined && rawValue !== 0) {
-            values[metric.prefix] = rawValue.toString();
-          } else {
-            values[metric.prefix] = '';
-          }
-        });
-        setFormData(values);
-      }
+      const vals: Record<string, string> = {};
+      (data || []).forEach((row: any) => {
+        const v = row[columnKey];
+        vals[row.id] = v !== null && v !== undefined && v !== 0 ? v.toString() : '';
+      });
+      setValues(vals);
     } catch (err) {
-      console.error('Error loading company data:', err);
+      console.error('Error loading metric values:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (prefix: string, value: string) => {
+  const handleValueChange = (companyId: string, value: string) => {
     if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
-      setFormData(prev => ({ ...prev, [prefix]: value }));
+      setValues(prev => ({ ...prev, [companyId]: value }));
       setSaveStatus('idle');
     }
   };
 
+  const handlePaste = useCallback((e: React.ClipboardEvent, startCompanyId: string) => {
+    const pastedText = e.clipboardData.getData('text');
+    const pastedLines = pastedText.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
+
+    if (pastedLines.length <= 1) return;
+
+    e.preventDefault();
+
+    const startIndex = companies.findIndex(c => c.id === startCompanyId);
+    if (startIndex === -1) return;
+
+    const newValues = { ...values };
+    pastedLines.forEach((line, i) => {
+      const targetIndex = startIndex + i;
+      if (targetIndex < companies.length) {
+        const cleaned = line.replace(/[^0-9.\-]/g, '');
+        if (cleaned === '' || /^-?\d*\.?\d*$/.test(cleaned)) {
+          newValues[companies[targetIndex].id] = cleaned;
+        }
+      }
+    });
+
+    setValues(newValues);
+    setSaveStatus('idle');
+    setPasteTarget(startCompanyId);
+    setTimeout(() => setPasteTarget(null), 1500);
+  }, [companies, values]);
+
   const handleSave = async () => {
-    if (!selectedCompanyId) return;
     setSaving(true);
     setSaveStatus('idle');
     try {
-      const suffix = `_q${selectedQuarter}_${selectedYear}`;
-      const updatePayload: Record<string, any> = {};
+      const columnKey = `${selectedMetric.prefix}_q${selectedQuarter}_${selectedYear}`;
 
-      LP_METRICS.forEach(metric => {
-        const key = `${metric.prefix}${suffix}`;
-        const rawValue = formData[metric.prefix];
-        updatePayload[key] = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
+      const updates = companies.map(company => {
+        const rawValue = values[company.id];
+        const numValue = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
+        return supabase
+          .from('company_data')
+          .update({
+            [columnKey]: numValue,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', company.id);
       });
 
-      if (totalCommitment !== '') {
-        updatePayload.total_commitment = parseFloat(totalCommitment) || 0;
-      }
-
-      updatePayload.updated_at = new Date().toISOString();
-
-      const { error } = await supabase
-        .from('company_data')
-        .update(updatePayload)
-        .eq('id', selectedCompanyId);
-
-      if (error) throw error;
+      const results = await Promise.all(updates);
+      const hasError = results.some(r => r.error);
+      if (hasError) throw new Error('Some updates failed');
 
       setSaveStatus('success');
       onDataSaved?.();
@@ -159,13 +170,6 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
     }
   };
 
-  const filteredCompanies = companies.filter(c =>
-    c.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.company_no.toString().includes(searchQuery)
-  );
-
-  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
-
   const formatCurrency = (value: number) => {
     return '\u20AC ' + new Intl.NumberFormat('de-DE', {
       minimumFractionDigits: 0,
@@ -173,20 +177,50 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
     }).format(value);
   };
 
+  const filledCount = Object.values(values).filter(v => v !== '').length;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header with selectors */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">LP / Company Data</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Select an LP and enter quarterly account data
+            Select a metric and quarter, then enter values for all LPs at once
           </p>
         </div>
 
-        <div className="flex items-center gap-3" ref={dropdownRef}>
+        <div className="flex items-center gap-2 flex-wrap" ref={dropdownRef}>
+          {/* Metric selector */}
           <div className="relative">
             <button
-              onClick={() => { setShowQuarterDropdown(!showQuarterDropdown); setShowYearDropdown(false); }}
+              onClick={() => { setShowMetricDropdown(!showMetricDropdown); setShowQuarterDropdown(false); setShowYearDropdown(false); }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#0a2547] text-white rounded-lg text-sm font-medium hover:bg-[#1a365d] transition-colors min-w-[160px] justify-between"
+            >
+              {selectedMetric.label}
+              <ChevronDown className="h-4 w-4 text-white/70" />
+            </button>
+            {showMetricDropdown && (
+              <div className="absolute left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 min-w-[200px]">
+                {LP_METRICS.map(m => (
+                  <button
+                    key={m.prefix}
+                    onClick={() => { setSelectedMetric(m); setShowMetricDropdown(false); }}
+                    className={`w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 transition-colors ${
+                      m.prefix === selectedMetric.prefix ? 'bg-[#0a2547]/5 text-[#0a2547] font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quarter selector */}
+          <div className="relative">
+            <button
+              onClick={() => { setShowQuarterDropdown(!showQuarterDropdown); setShowYearDropdown(false); setShowMetricDropdown(false); }}
               className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
             >
               Q{selectedQuarter}
@@ -209,9 +243,10 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
             )}
           </div>
 
+          {/* Year selector */}
           <div className="relative">
             <button
-              onClick={() => { setShowYearDropdown(!showYearDropdown); setShowQuarterDropdown(false); }}
+              onClick={() => { setShowYearDropdown(!showYearDropdown); setShowQuarterDropdown(false); setShowMetricDropdown(false); }}
               className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
             >
               {selectedYear}
@@ -236,132 +271,106 @@ export default function LPDataEntry({ onDataSaved }: LPDataEntryProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Company selector sidebar */}
-        <div className="lg:col-span-1 space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search companies..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors"
-            />
-          </div>
-          <div className="border border-gray-200 rounded-lg overflow-hidden max-h-[420px] overflow-y-auto">
-            {filteredCompanies.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">No companies found</p>
-            ) : (
-              filteredCompanies.map(company => (
-                <button
-                  key={company.id}
-                  onClick={() => { setSelectedCompanyId(company.id); setSaveStatus('idle'); }}
-                  className={`w-full text-left px-4 py-3 text-sm border-b border-gray-100 last:border-b-0 transition-colors ${
-                    company.id === selectedCompanyId
-                      ? 'bg-[#0a2547] text-white'
-                      : 'hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  <div className="font-medium truncate">{company.company_name}</div>
-                  <div className={`text-xs mt-0.5 ${company.id === selectedCompanyId ? 'text-white/70' : 'text-gray-400'}`}>
-                    No. {company.company_no} &middot; {formatCurrency(company.total_commitment)}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
+      {/* Paste hint */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-lg">
+        <ClipboardPaste className="h-4 w-4 text-blue-500 shrink-0" />
+        <p className="text-xs text-blue-700">
+          Paste multiple values from a spreadsheet column -- click any input field and paste. Values will fill downward from that row.
+        </p>
+      </div>
 
-        {/* Data entry form */}
-        <div className="lg:col-span-3">
-          {!selectedCompanyId ? (
-            <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-              Select a company to enter data
-            </div>
-          ) : loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-4 w-32 bg-gray-200 rounded mb-2" />
-                  <div className="h-10 bg-gray-100 rounded-lg" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="bg-gray-50 rounded-lg px-4 py-3 flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-gray-900">{selectedCompany?.company_name}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    Company No. {selectedCompany?.company_no}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-gray-500">Total Commitment</div>
-                  <div className="relative inline-block">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{'\u20AC'}</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={totalCommitment}
-                      onChange={(e) => {
-                        if (e.target.value === '' || /^-?\d*\.?\d*$/.test(e.target.value)) {
-                          setTotalCommitment(e.target.value);
-                          setSaveStatus('idle');
-                        }
-                      }}
-                      className="w-40 pl-7 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm text-right font-medium focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-                {LP_METRICS.map(metric => (
-                  <div key={metric.prefix}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      {metric.label}
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{'\u20AC'}</span>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={formData[metric.prefix] || ''}
-                        onChange={(e) => handleInputChange(metric.prefix, e.target.value)}
-                        placeholder="0"
-                        className="w-full pl-8 pr-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* Bulk entry table */}
+      <div ref={tableRef} className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">#</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Company Name</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-48">Total Commitment</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-56">
+                  {selectedMetric.label} (Q{selectedQuarter} {selectedYear})
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-4 py-3"><div className="h-4 w-8 bg-gray-100 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3"><div className="h-4 w-40 bg-gray-100 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3"><div className="h-4 w-24 bg-gray-100 rounded animate-pulse ml-auto" /></td>
+                    <td className="px-4 py-3"><div className="h-9 w-full bg-gray-100 rounded-lg animate-pulse" /></td>
+                  </tr>
+                ))
+              ) : companies.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-400">
+                    No LP companies found
+                  </td>
+                </tr>
+              ) : (
+                companies.map((company, index) => (
+                  <tr
+                    key={company.id}
+                    className={`hover:bg-gray-50/50 transition-colors ${
+                      pasteTarget === company.id ? 'bg-emerald-50' : ''
+                    }`}
+                  >
+                    <td className="px-4 py-2.5 text-sm text-gray-400 font-mono">{index + 1}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="text-sm font-medium text-gray-900">{company.company_name}</div>
+                      <div className="text-xs text-gray-400">No. {company.company_no}</div>
+                    </td>
+                    <td className="px-4 py-2.5 text-sm text-gray-600 text-right font-mono">
+                      {formatCurrency(company.total_commitment)}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{'\u20AC'}</span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={values[company.id] || ''}
+                          onChange={(e) => handleValueChange(company.id, e.target.value)}
+                          onPaste={(e) => handlePaste(e, company.id)}
+                          placeholder="0"
+                          className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors font-mono"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
+      {/* Footer with save */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <div className="text-sm">
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-500">
+            {filledCount} of {companies.length} values entered
+          </div>
           {saveStatus === 'success' && (
-            <span className="flex items-center gap-1.5 text-emerald-600">
+            <span className="flex items-center gap-1.5 text-sm text-emerald-600">
               <Check className="h-4 w-4" /> Saved successfully
             </span>
           )}
           {saveStatus === 'error' && (
-            <span className="flex items-center gap-1.5 text-red-600">
+            <span className="flex items-center gap-1.5 text-sm text-red-600">
               <AlertCircle className="h-4 w-4" /> Failed to save. Try again.
             </span>
           )}
         </div>
         <button
           onClick={handleSave}
-          disabled={saving || loading || !selectedCompanyId}
+          disabled={saving || loading}
           className="flex items-center gap-2 px-5 py-2.5 bg-[#0a2547] text-white rounded-lg text-sm font-medium hover:bg-[#1a365d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <Save className="h-4 w-4" />
-          {saving ? 'Saving...' : 'Save LP Data'}
+          {saving ? 'Saving...' : `Save All ${selectedMetric.label}`}
         </button>
       </div>
     </div>

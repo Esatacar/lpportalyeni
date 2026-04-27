@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Check, AlertCircle, ChevronDown, Search, Plus, Trash2 } from 'lucide-react';
+import { Save, Check, AlertCircle, ChevronDown, ClipboardPaste, Plus, Trash2 } from 'lucide-react';
 
 const PORTFOLIO_METRICS = [
   { label: 'Total Investment', prefix: 'total_investment' },
   { label: 'Total Value', prefix: 'total_value' },
+  { label: 'Latest Ownership (%)', prefix: 'latest_ownership', isStatic: true },
+  { label: 'Latest Valuation', prefix: 'latest_valuation', isStatic: true },
 ];
 
 const YEARS = [2026, 2025, 2024, 2023, 2022, 2021];
@@ -15,7 +17,6 @@ interface PortfolioRow {
   portfolio_company_name: string;
   latest_ownership: number;
   latest_valuation: number;
-  [key: string]: any;
 }
 
 interface PortfolioDataEntryProps {
@@ -25,28 +26,29 @@ interface PortfolioDataEntryProps {
 export default function PortfolioDataEntry({ onDataSaved }: PortfolioDataEntryProps) {
   const [selectedYear, setSelectedYear] = useState(2025);
   const [selectedQuarter, setSelectedQuarter] = useState(1);
+  const [selectedMetric, setSelectedMetric] = useState(PORTFOLIO_METRICS[0]);
   const [portfolioCompanies, setPortfolioCompanies] = useState<PortfolioRow[]>([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Record<string, string>>({});
-  const [companyName, setCompanyName] = useState('');
-  const [latestOwnership, setLatestOwnership] = useState('');
-  const [latestValuation, setLatestValuation] = useState('');
+  const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [showQuarterDropdown, setShowQuarterDropdown] = useState(false);
+  const [showMetricDropdown, setShowMetricDropdown] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
   const [addingCompany, setAddingCompany] = useState(false);
+  const [pasteTarget, setPasteTarget] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isStaticMetric = selectedMetric.isStatic;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowYearDropdown(false);
         setShowQuarterDropdown(false);
+        setShowMetricDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -58,10 +60,10 @@ export default function PortfolioDataEntry({ onDataSaved }: PortfolioDataEntryPr
   }, []);
 
   useEffect(() => {
-    if (selectedCompanyId) {
-      loadPortfolioData();
+    if (portfolioCompanies.length > 0) {
+      loadMetricValues();
     }
-  }, [selectedCompanyId, selectedYear, selectedQuarter]);
+  }, [portfolioCompanies, selectedYear, selectedQuarter, selectedMetric]);
 
   const loadPortfolioCompanies = async () => {
     try {
@@ -72,76 +74,97 @@ export default function PortfolioDataEntry({ onDataSaved }: PortfolioDataEntryPr
 
       if (error) throw error;
       setPortfolioCompanies(data || []);
-      if (data && data.length > 0 && !selectedCompanyId) {
-        setSelectedCompanyId(data[0].id);
-      }
     } catch (err) {
       console.error('Error loading portfolio companies:', err);
     }
   };
 
-  const loadPortfolioData = async () => {
-    if (!selectedCompanyId) return;
+  const loadMetricValues = async () => {
     setLoading(true);
     try {
+      let columnKey: string;
+      if (isStaticMetric) {
+        columnKey = selectedMetric.prefix;
+      } else {
+        columnKey = `${selectedMetric.prefix}_q${selectedQuarter}_${selectedYear}`;
+      }
+
       const { data, error } = await supabase
         .from('portfolio_data')
-        .select('*')
-        .eq('id', selectedCompanyId)
-        .maybeSingle();
+        .select(`id, ${columnKey}`)
+        .order('portfolio_company_name', { ascending: true });
 
       if (error) throw error;
 
-      if (data) {
-        setCompanyName(data.portfolio_company_name || '');
-        setLatestOwnership(data.latest_ownership ? (Number(data.latest_ownership) * 100).toString() : '');
-        setLatestValuation(data.latest_valuation ? data.latest_valuation.toString() : '');
-
-        const suffix = `_q${selectedQuarter}_${selectedYear}`;
-        const values: Record<string, string> = {};
-        PORTFOLIO_METRICS.forEach(metric => {
-          const key = `${metric.prefix}${suffix}`;
-          const rawValue = data[key];
-          if (rawValue !== null && rawValue !== undefined && rawValue !== 0) {
-            values[metric.prefix] = rawValue.toString();
+      const vals: Record<string, string> = {};
+      (data || []).forEach((row: any) => {
+        const v = row[columnKey];
+        if (v !== null && v !== undefined && v !== 0) {
+          if (selectedMetric.prefix === 'latest_ownership') {
+            vals[row.id] = (Number(v) * 100).toString();
           } else {
-            values[metric.prefix] = '';
+            vals[row.id] = v.toString();
           }
-        });
-        setFormData(values);
-      }
+        } else {
+          vals[row.id] = '';
+        }
+      });
+      setValues(vals);
     } catch (err) {
-      console.error('Error loading portfolio data:', err);
+      console.error('Error loading metric values:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (prefix: string, value: string) => {
+  const handleValueChange = (companyId: string, value: string) => {
     if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
-      setFormData(prev => ({ ...prev, [prefix]: value }));
+      setValues(prev => ({ ...prev, [companyId]: value }));
       setSaveStatus('idle');
     }
   };
+
+  const handlePaste = useCallback((e: React.ClipboardEvent, startCompanyId: string) => {
+    const pastedText = e.clipboardData.getData('text');
+    const pastedLines = pastedText.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
+
+    if (pastedLines.length <= 1) return;
+
+    e.preventDefault();
+
+    const startIndex = portfolioCompanies.findIndex(c => c.id === startCompanyId);
+    if (startIndex === -1) return;
+
+    const newValues = { ...values };
+    pastedLines.forEach((line, i) => {
+      const targetIndex = startIndex + i;
+      if (targetIndex < portfolioCompanies.length) {
+        const cleaned = line.replace(/[^0-9.\-]/g, '');
+        if (cleaned === '' || /^-?\d*\.?\d*$/.test(cleaned)) {
+          newValues[portfolioCompanies[targetIndex].id] = cleaned;
+        }
+      }
+    });
+
+    setValues(newValues);
+    setSaveStatus('idle');
+    setPasteTarget(startCompanyId);
+    setTimeout(() => setPasteTarget(null), 1500);
+  }, [portfolioCompanies, values]);
 
   const handleAddCompany = async () => {
     if (!newCompanyName.trim()) return;
     setAddingCompany(true);
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('portfolio_data')
-        .insert([{ portfolio_company_name: newCompanyName.trim() }])
-        .select()
-        .maybeSingle();
+        .insert([{ portfolio_company_name: newCompanyName.trim() }]);
 
       if (error) throw error;
 
-      if (data) {
-        await loadPortfolioCompanies();
-        setSelectedCompanyId(data.id);
-        setNewCompanyName('');
-        setShowAddForm(false);
-      }
+      await loadPortfolioCompanies();
+      setNewCompanyName('');
+      setShowAddForm(false);
     } catch (err) {
       console.error('Error adding portfolio company:', err);
       alert('Failed to add company. Please try again.');
@@ -150,20 +173,15 @@ export default function PortfolioDataEntry({ onDataSaved }: PortfolioDataEntryPr
     }
   };
 
-  const handleDeleteCompany = async () => {
-    if (!selectedCompanyId) return;
-    const companyToDelete = portfolioCompanies.find(c => c.id === selectedCompanyId);
-    if (!confirm(`Are you sure you want to delete "${companyToDelete?.portfolio_company_name}"? This will remove all its data.`)) return;
-
+  const handleDeleteCompany = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"? This will remove all its data.`)) return;
     try {
       const { error } = await supabase
         .from('portfolio_data')
         .delete()
-        .eq('id', selectedCompanyId);
+        .eq('id', id);
 
       if (error) throw error;
-
-      setSelectedCompanyId(null);
       await loadPortfolioCompanies();
     } catch (err) {
       console.error('Error deleting portfolio company:', err);
@@ -172,41 +190,40 @@ export default function PortfolioDataEntry({ onDataSaved }: PortfolioDataEntryPr
   };
 
   const handleSave = async () => {
-    if (!selectedCompanyId) return;
     setSaving(true);
     setSaveStatus('idle');
     try {
-      const suffix = `_q${selectedQuarter}_${selectedYear}`;
-      const updatePayload: Record<string, any> = {};
+      let columnKey: string;
+      if (isStaticMetric) {
+        columnKey = selectedMetric.prefix;
+      } else {
+        columnKey = `${selectedMetric.prefix}_q${selectedQuarter}_${selectedYear}`;
+      }
 
-      PORTFOLIO_METRICS.forEach(metric => {
-        const key = `${metric.prefix}${suffix}`;
-        const rawValue = formData[metric.prefix];
-        updatePayload[key] = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
+      const updates = portfolioCompanies.map(company => {
+        const rawValue = values[company.id];
+        let numValue: number;
+        if (selectedMetric.prefix === 'latest_ownership') {
+          numValue = rawValue !== undefined && rawValue !== '' ? (parseFloat(rawValue) || 0) / 100 : 0;
+        } else {
+          numValue = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
+        }
+        return supabase
+          .from('portfolio_data')
+          .update({
+            [columnKey]: numValue,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', company.id);
       });
 
-      if (companyName.trim()) {
-        updatePayload.portfolio_company_name = companyName.trim();
-      }
-      if (latestOwnership !== '') {
-        updatePayload.latest_ownership = parseFloat(latestOwnership) / 100;
-      }
-      if (latestValuation !== '') {
-        updatePayload.latest_valuation = parseFloat(latestValuation) || 0;
-      }
-
-      updatePayload.updated_at = new Date().toISOString();
-
-      const { error } = await supabase
-        .from('portfolio_data')
-        .update(updatePayload)
-        .eq('id', selectedCompanyId);
-
-      if (error) throw error;
+      const results = await Promise.all(updates);
+      const hasError = results.some(r => r.error);
+      if (hasError) throw new Error('Some updates failed');
 
       setSaveStatus('success');
       onDataSaved?.();
-      loadPortfolioCompanies();
+      if (isStaticMetric) loadPortfolioCompanies();
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (err) {
       console.error('Error saving portfolio data:', err);
@@ -216,276 +233,265 @@ export default function PortfolioDataEntry({ onDataSaved }: PortfolioDataEntryPr
     }
   };
 
-  const filteredCompanies = portfolioCompanies.filter(c =>
-    c.portfolio_company_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const getInputPrefix = () => {
+    if (selectedMetric.prefix === 'latest_ownership') return '';
+    return '\u20AC';
+  };
+
+  const getInputSuffix = () => {
+    if (selectedMetric.prefix === 'latest_ownership') return '%';
+    return '';
+  };
+
+  const filledCount = Object.values(values).filter(v => v !== '').length;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header with selectors */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Portfolio Data</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Manage portfolio companies and their quarterly investment data
+            Select a metric and quarter, then enter values for all portfolio companies
           </p>
         </div>
 
-        <div className="flex items-center gap-3" ref={dropdownRef}>
+        <div className="flex items-center gap-2 flex-wrap" ref={dropdownRef}>
+          {/* Metric selector */}
           <div className="relative">
             <button
-              onClick={() => { setShowQuarterDropdown(!showQuarterDropdown); setShowYearDropdown(false); }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+              onClick={() => { setShowMetricDropdown(!showMetricDropdown); setShowQuarterDropdown(false); setShowYearDropdown(false); }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#0a2547] text-white rounded-lg text-sm font-medium hover:bg-[#1a365d] transition-colors min-w-[160px] justify-between"
             >
-              Q{selectedQuarter}
-              <ChevronDown className="h-4 w-4 text-gray-400" />
+              {selectedMetric.label}
+              <ChevronDown className="h-4 w-4 text-white/70" />
             </button>
-            {showQuarterDropdown && (
-              <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 min-w-[80px]">
-                {QUARTERS.map(q => (
+            {showMetricDropdown && (
+              <div className="absolute left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 min-w-[200px]">
+                {PORTFOLIO_METRICS.map(m => (
                   <button
-                    key={q}
-                    onClick={() => { setSelectedQuarter(q); setShowQuarterDropdown(false); }}
-                    className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
-                      q === selectedQuarter ? 'bg-[#0a2547]/5 text-[#0a2547] font-medium' : 'text-gray-700'
+                    key={m.prefix}
+                    onClick={() => { setSelectedMetric(m); setShowMetricDropdown(false); }}
+                    className={`w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 transition-colors ${
+                      m.prefix === selectedMetric.prefix ? 'bg-[#0a2547]/5 text-[#0a2547] font-medium' : 'text-gray-700'
                     }`}
                   >
-                    Q{q}
+                    {m.label}
+                    {m.isStatic && <span className="ml-2 text-xs text-gray-400">(non-quarterly)</span>}
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="relative">
-            <button
-              onClick={() => { setShowYearDropdown(!showYearDropdown); setShowQuarterDropdown(false); }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
-            >
-              {selectedYear}
-              <ChevronDown className="h-4 w-4 text-gray-400" />
-            </button>
-            {showYearDropdown && (
-              <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 min-w-[100px]">
-                {YEARS.map(y => (
-                  <button
-                    key={y}
-                    onClick={() => { setSelectedYear(y); setShowYearDropdown(false); }}
-                    className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
-                      y === selectedYear ? 'bg-[#0a2547]/5 text-[#0a2547] font-medium' : 'text-gray-700'
-                    }`}
-                  >
-                    {y}
-                  </button>
-                ))}
+          {/* Quarter/Year selectors - hidden for static metrics */}
+          {!isStaticMetric && (
+            <>
+              <div className="relative">
+                <button
+                  onClick={() => { setShowQuarterDropdown(!showQuarterDropdown); setShowYearDropdown(false); setShowMetricDropdown(false); }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Q{selectedQuarter}
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </button>
+                {showQuarterDropdown && (
+                  <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 min-w-[80px]">
+                    {QUARTERS.map(q => (
+                      <button
+                        key={q}
+                        onClick={() => { setSelectedQuarter(q); setShowQuarterDropdown(false); }}
+                        className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
+                          q === selectedQuarter ? 'bg-[#0a2547]/5 text-[#0a2547] font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        Q{q}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              <div className="relative">
+                <button
+                  onClick={() => { setShowYearDropdown(!showYearDropdown); setShowQuarterDropdown(false); setShowMetricDropdown(false); }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  {selectedYear}
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </button>
+                {showYearDropdown && (
+                  <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 min-w-[100px]">
+                    {YEARS.map(y => (
+                      <button
+                        key={y}
+                        onClick={() => { setSelectedYear(y); setShowYearDropdown(false); }}
+                        className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
+                          y === selectedYear ? 'bg-[#0a2547]/5 text-[#0a2547] font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        {y}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Company selector sidebar */}
-        <div className="lg:col-span-1 space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Paste hint */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-lg">
+        <ClipboardPaste className="h-4 w-4 text-blue-500 shrink-0" />
+        <p className="text-xs text-blue-700">
+          Paste multiple values from a spreadsheet column -- click any input field and paste. Values will fill downward from that row.
+        </p>
+      </div>
+
+      {/* Add company */}
+      <div>
+        {showAddForm ? (
+          <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder="Search portfolio..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors"
+              placeholder="New company name..."
+              value={newCompanyName}
+              onChange={(e) => setNewCompanyName(e.target.value)}
+              className="flex-1 max-w-xs px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none"
+              autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAddCompany(); }}
             />
-          </div>
-
-          {showAddForm ? (
-            <div className="border border-gray-200 rounded-lg p-3 space-y-2">
-              <input
-                type="text"
-                placeholder="Company name..."
-                value={newCompanyName}
-                onChange={(e) => setNewCompanyName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none"
-                autoFocus
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleAddCompany}
-                  disabled={addingCompany || !newCompanyName.trim()}
-                  className="flex-1 px-3 py-1.5 bg-[#0a2547] text-white text-sm rounded-lg disabled:opacity-50 hover:bg-[#1a365d] transition-colors"
-                >
-                  {addingCompany ? 'Adding...' : 'Add'}
-                </button>
-                <button
-                  onClick={() => { setShowAddForm(false); setNewCompanyName(''); }}
-                  className="flex-1 px-3 py-1.5 border border-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
             <button
-              onClick={() => setShowAddForm(true)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-[#0a2547] hover:text-[#0a2547] transition-colors"
+              onClick={handleAddCompany}
+              disabled={addingCompany || !newCompanyName.trim()}
+              className="px-4 py-2 bg-[#0a2547] text-white text-sm rounded-lg disabled:opacity-50 hover:bg-[#1a365d] transition-colors"
             >
-              <Plus className="h-4 w-4" />
-              Add Company
+              {addingCompany ? 'Adding...' : 'Add'}
             </button>
-          )}
-
-          <div className="border border-gray-200 rounded-lg overflow-hidden max-h-[360px] overflow-y-auto">
-            {filteredCompanies.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">No portfolio companies</p>
-            ) : (
-              filteredCompanies.map(company => (
-                <button
-                  key={company.id}
-                  onClick={() => { setSelectedCompanyId(company.id); setSaveStatus('idle'); }}
-                  className={`w-full text-left px-4 py-3 text-sm border-b border-gray-100 last:border-b-0 transition-colors ${
-                    company.id === selectedCompanyId
-                      ? 'bg-[#0a2547] text-white'
-                      : 'hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  <div className="font-medium truncate">{company.portfolio_company_name}</div>
-                  <div className={`text-xs mt-0.5 ${company.id === selectedCompanyId ? 'text-white/70' : 'text-gray-400'}`}>
-                    {company.latest_ownership ? `${(Number(company.latest_ownership) * 100).toFixed(1)}% ownership` : 'No ownership data'}
-                  </div>
-                </button>
-              ))
-            )}
+            <button
+              onClick={() => { setShowAddForm(false); setNewCompanyName(''); }}
+              className="px-4 py-2 border border-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
           </div>
-        </div>
+        ) : (
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-[#0a2547] hover:text-[#0a2547] transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Add Portfolio Company
+          </button>
+        )}
+      </div>
 
-        {/* Data entry form */}
-        <div className="lg:col-span-3">
-          {!selectedCompanyId ? (
-            <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-              Select a portfolio company to enter data
-            </div>
-          ) : loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-4 w-32 bg-gray-200 rounded mb-2" />
-                  <div className="h-10 bg-gray-100 rounded-lg" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="bg-gray-50 rounded-lg px-4 py-3">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="text-sm font-medium text-gray-500">Company Details</div>
-                  <button
-                    onClick={handleDeleteCompany}
-                    className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 transition-colors"
+      {/* Bulk entry table */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">#</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Company Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-56">
+                  {selectedMetric.label}
+                  {!isStaticMetric && ` (Q${selectedQuarter} ${selectedYear})`}
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-16"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-4 py-3"><div className="h-4 w-8 bg-gray-100 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3"><div className="h-4 w-40 bg-gray-100 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3"><div className="h-9 w-full bg-gray-100 rounded-lg animate-pulse" /></td>
+                    <td className="px-4 py-3"></td>
+                  </tr>
+                ))
+              ) : portfolioCompanies.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-400">
+                    No portfolio companies found. Add one above.
+                  </td>
+                </tr>
+              ) : (
+                portfolioCompanies.map((company, index) => (
+                  <tr
+                    key={company.id}
+                    className={`hover:bg-gray-50/50 transition-colors ${
+                      pasteTarget === company.id ? 'bg-emerald-50' : ''
+                    }`}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Delete Company
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Company Name</label>
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => { setCompanyName(e.target.value); setSaveStatus('idle'); }}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Latest Ownership (%)</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={latestOwnership}
-                        onChange={(e) => {
-                          if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) {
-                            setLatestOwnership(e.target.value);
-                            setSaveStatus('idle');
-                          }
-                        }}
-                        placeholder="0.0"
-                        className="w-full pr-7 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Latest Valuation</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{'\u20AC'}</span>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={latestValuation}
-                        onChange={(e) => {
-                          if (e.target.value === '' || /^-?\d*\.?\d*$/.test(e.target.value)) {
-                            setLatestValuation(e.target.value);
-                            setSaveStatus('idle');
-                          }
-                        }}
-                        placeholder="0"
-                        className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-sm font-medium text-gray-500 mb-3">
-                  Quarterly Data - Q{selectedQuarter} {selectedYear}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-                  {PORTFOLIO_METRICS.map(metric => (
-                    <div key={metric.prefix}>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        {metric.label}
-                      </label>
+                    <td className="px-4 py-2.5 text-sm text-gray-400 font-mono">{index + 1}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="text-sm font-medium text-gray-900">{company.portfolio_company_name}</div>
+                    </td>
+                    <td className="px-4 py-2.5">
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{'\u20AC'}</span>
+                        {getInputPrefix() && (
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{getInputPrefix()}</span>
+                        )}
                         <input
                           type="text"
                           inputMode="decimal"
-                          value={formData[metric.prefix] || ''}
-                          onChange={(e) => handleInputChange(metric.prefix, e.target.value)}
+                          value={values[company.id] || ''}
+                          onChange={(e) => handleValueChange(company.id, e.target.value)}
+                          onPaste={(e) => handlePaste(e, company.id)}
                           placeholder="0"
-                          className="w-full pl-8 pr-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors"
+                          className={`w-full py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors font-mono ${
+                            getInputPrefix() ? 'pl-8' : 'pl-3'
+                          } ${getInputSuffix() ? 'pr-8' : 'pr-3'}`}
                         />
+                        {getInputSuffix() && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{getInputSuffix()}</span>
+                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <button
+                        onClick={() => handleDeleteCompany(company.id, company.portfolio_company_name)}
+                        className="text-gray-300 hover:text-red-500 transition-colors"
+                        title="Delete company"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
+      {/* Footer with save */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <div className="text-sm">
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-500">
+            {filledCount} of {portfolioCompanies.length} values entered
+          </div>
           {saveStatus === 'success' && (
-            <span className="flex items-center gap-1.5 text-emerald-600">
+            <span className="flex items-center gap-1.5 text-sm text-emerald-600">
               <Check className="h-4 w-4" /> Saved successfully
             </span>
           )}
           {saveStatus === 'error' && (
-            <span className="flex items-center gap-1.5 text-red-600">
+            <span className="flex items-center gap-1.5 text-sm text-red-600">
               <AlertCircle className="h-4 w-4" /> Failed to save. Try again.
             </span>
           )}
         </div>
         <button
           onClick={handleSave}
-          disabled={saving || loading || !selectedCompanyId}
+          disabled={saving || loading}
           className="flex items-center gap-2 px-5 py-2.5 bg-[#0a2547] text-white rounded-lg text-sm font-medium hover:bg-[#1a365d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <Save className="h-4 w-4" />
-          {saving ? 'Saving...' : 'Save Portfolio Data'}
+          {saving ? 'Saving...' : `Save All ${selectedMetric.label}`}
         </button>
       </div>
     </div>
