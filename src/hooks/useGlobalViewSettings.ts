@@ -71,90 +71,56 @@ async function findLatestQuarter() {
 
 async function findLatestFourQuarters() {
   try {
-    // Get company data to find quarters with data
-    const { data: companyData, error } = await supabase
+    const { data: rows, error } = await supabase
       .from('company_data')
-      .select('*')
-      .single();
-    
+      .select('*');
+
     if (error) throw error;
-    
-    const quarters: string[] = [];
+    if (!rows || rows.length === 0) return fallbackQuarters();
+
+    const metricsToCheck = [
+      'paid_capital', 'nav', 'management_fee', 'opex',
+      'distributions', 'unrealized_gains', 'realized_gains',
+      'carried_interest_gp'
+    ];
     const years = [2026, 2025, 2024, 2023, 2022, 2021];
     const quartersInYear = [4, 3, 2, 1];
-    
-    // Find the latest 4 quarters with data
+    const found: string[] = [];
+
     for (const year of years) {
       for (const quarter of quartersInYear) {
-        // Check if any metric has data for this quarter
-        const hasData = [
-          'paid_capital',
-          'nav',
-          'management_fee',
-          'opex',
-          'distributions',
-          'unrealized_gains',
-          'realized_gains',
-          'carried_interest_gp'
-        ].some(metric => {
-          const value = companyData[`${metric}_q${quarter}_${year}`];
-          return value !== null && value !== undefined && value !== 0;
-        });
-        
+        const hasData = rows.some(row =>
+          metricsToCheck.some(metric => {
+            const v = row[`${metric}_q${quarter}_${year}`];
+            return v !== null && v !== undefined && v !== 0;
+          })
+        );
         if (hasData) {
-          quarters.push(`${year}-${quarter}`);
-          if (quarters.length === 4) {
-            console.log('Found 4 latest quarters with data:', quarters);
-            return quarters;
-          }
+          found.push(`${year}-${quarter}`);
+          if (found.length === 4) return found;
         }
       }
     }
-    
-    // If we don't have 4 quarters with data, use the most recent ones we found
-    if (quarters.length > 0) {
-      console.log('Found some quarters with data:', quarters);
-      return quarters;
-    }
-    
-    // Fallback to current and previous 3 quarters if no data found
-    const currentDate = new Date();
-    let year = Math.min(Math.max(currentDate.getFullYear(), 2021), 2026);
-    let quarter = Math.min(Math.ceil((currentDate.getMonth() + 1) / 3), 4);
-    
-    const fallbackQuarters: string[] = [];
-    for (let i = 0; i < 4; i++) {
-      fallbackQuarters.push(`${year}-${quarter}`);
-      quarter--;
-      if (quarter < 1) {
-        quarter = 4;
-        year--;
-        if (year < 2021) break;
-      }
-    }
-    
-    console.log('Using fallback quarters:', fallbackQuarters);
-    return fallbackQuarters;
+
+    return found.length > 0 ? found : fallbackQuarters();
   } catch (error) {
     console.error('Error finding latest quarters:', error);
-    // Fallback to current and previous 3 quarters
-    const currentDate = new Date();
-    let year = Math.min(Math.max(currentDate.getFullYear(), 2021), 2026);
-    let quarter = Math.min(Math.ceil((currentDate.getMonth() + 1) / 3), 4);
-    
-    const fallbackQuarters: string[] = [];
-    for (let i = 0; i < 4; i++) {
-      fallbackQuarters.push(`${year}-${quarter}`);
-      quarter--;
-      if (quarter < 1) {
-        quarter = 4;
-        year--;
-        if (year < 2021) break;
-      }
-    }
-    
-    return fallbackQuarters;
+    return fallbackQuarters();
   }
+}
+
+function fallbackQuarters(): string[] {
+  const currentDate = new Date();
+  let year = Math.min(Math.max(currentDate.getFullYear(), 2021), 2026);
+  let quarter = Math.min(Math.ceil((currentDate.getMonth() + 1) / 3), 4);
+  const result: string[] = [];
+  for (let i = 0; i < 4; i++) {
+    result.push(`${year}-${quarter}`);
+    quarter--;
+    if (quarter < 1) { quarter = 4; year--; }
+    if (year < 2021) break;
+  }
+  return result;
 }
 
 const DEFAULT_SETTINGS: ViewSettings = {
