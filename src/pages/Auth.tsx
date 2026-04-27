@@ -6,56 +6,42 @@ import Logo from '../components/Logo';
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { signIn, signUp, checkAdmin } = useAuthStore();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { signIn, signUp } = useAuthStore();
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
     companyName: '',
-    adminCode: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    
+
     try {
       if (isSignUp) {
-        if (isAdmin && !checkAdmin(formData.adminCode)) {
-          setError('Invalid admin verification code');
-          return;
-        }
-        
         await signUp(formData.email, formData.password, {
           full_name: formData.fullName,
           company_name: formData.companyName,
-          role: isAdmin ? 'admin' : 'lp',
         });
-        
-        if (isAdmin) {
-          navigate('/admin');
-        } else {
-          setSuccess(`Thank you for registering! Your account has been created successfully.
+
+        setSuccess(`Thank you for registering! Your account has been created successfully.
 
 We will review your registration and notify you via email (${formData.email}) once your account is approved.
 
 In the meantime, you can sign in to check your approval status.`);
-          
-          // Clear form
-          setFormData({
-            email: '',
-            password: '',
-            fullName: '',
-            companyName: '',
-            adminCode: '',
-          });
-        }
+
+        setFormData({
+          email: '',
+          password: '',
+          fullName: '',
+          companyName: '',
+        });
       } else {
         const user = await signIn(formData.email, formData.password);
         if (user.role === 'admin') {
@@ -68,7 +54,7 @@ In the meantime, you can sign in to check your approval status.`);
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       setError(error.message === 'Invalid login credentials'
         ? 'Incorrect email or password. Please try again.'
         : error.message
@@ -83,19 +69,6 @@ In the meantime, you can sign in to check your approval status.`);
           <Logo size="large" />
         </div>
 
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => {
-              setIsAdmin(!isAdmin);
-              setError('');
-              setSuccess('');
-            }}
-            className="text-sm text-[#0a2547] hover:text-[#1a365d]"
-          >
-            {isAdmin ? 'Switch to LP' : 'Switch to Admin'}
-          </button>
-        </div>
-
         {/* Sign In/Sign Up Toggle */}
         <div className="flex gap-4 mb-6">
           <button
@@ -108,12 +81,11 @@ In the meantime, you can sign in to check your approval status.`);
                 password: '',
                 fullName: '',
                 companyName: '',
-                adminCode: '',
               });
             }}
             className={`flex-1 py-2 px-4 rounded-md text-center transition-colors ${
-              !isSignUp 
-                ? 'bg-[#0a2547] text-white' 
+              !isSignUp
+                ? 'bg-[#0a2547] text-white'
                 : 'bg-gray-100 text-[#0a2547] hover:bg-gray-200'
             }`}
           >
@@ -129,12 +101,11 @@ In the meantime, you can sign in to check your approval status.`);
                 password: '',
                 fullName: '',
                 companyName: '',
-                adminCode: '',
               });
             }}
             className={`flex-1 py-2 px-4 rounded-md text-center transition-colors ${
-              isSignUp 
-                ? 'bg-[#0a2547] text-white' 
+              isSignUp
+                ? 'bg-[#0a2547] text-white'
                 : 'bg-gray-100 text-[#0a2547] hover:bg-gray-200'
             }`}
           >
@@ -143,9 +114,7 @@ In the meantime, you can sign in to check your approval status.`);
         </div>
 
         <h1 className="text-2xl font-bold text-[#0a2547] mb-6 text-center">
-          {isSignUp 
-            ? 'Create Account' 
-            : (isAdmin ? 'Admin Panel' : 'LP Portal')}
+          {isSignUp ? 'Create Account' : 'LP Portal'}
         </h1>
 
         {error && (
@@ -211,34 +180,19 @@ In the meantime, you can sign in to check your approval status.`);
                 </div>
               </div>
 
-              {!isAdmin && (
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Company Name</label>
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      type="text"
-                      value={formData.companyName}
-                      onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                      className="pl-10 w-full p-2 border rounded-md focus:ring-[#0a2547] focus:border-[#0a2547]"
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-
-              {isAdmin && (
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Admin Verification Code</label>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Company Name</label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                   <input
                     type="text"
-                    value={formData.adminCode}
-                    onChange={(e) => setFormData({ ...formData, adminCode: e.target.value })}
-                    className="w-full p-2 border rounded-md focus:ring-[#0a2547] focus:border-[#0a2547]"
+                    value={formData.companyName}
+                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    className="pl-10 w-full p-2 border rounded-md focus:ring-[#0a2547] focus:border-[#0a2547]"
                     required
                   />
                 </div>
-              )}
+              </div>
             </>
           )}
 

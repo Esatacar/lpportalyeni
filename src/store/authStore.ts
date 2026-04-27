@@ -17,9 +17,8 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
   initializeAuth: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<Profile>;
-  signUp: (email: string, password: string, data: Partial<Profile>) => Promise<void>;
+  signUp: (email: string, password: string, data: { full_name: string; company_name?: string }) => Promise<void>;
   signOut: () => Promise<void>;
-  checkAdmin: (code: string) => boolean;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -98,32 +97,26 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signUp: async (email, password, data) => {
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          ...data,
-          is_approved: data.role === 'admin',
-        },
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-signup`;
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       },
-    });
-    if (signUpError) throw signUpError;
-
-    if (!authData.user) {
-      throw new Error('User creation failed');
-    }
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert([{
-        id: authData.user.id,
+      body: JSON.stringify({
         email,
-        ...data,
-        is_approved: data.role === 'admin',
-      }]);
+        password,
+        full_name: data.full_name,
+        company_name: data.company_name || '',
+      }),
+    });
 
-    if (profileError) throw profileError;
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to create account');
+    }
   },
 
   signOut: async () => {
@@ -133,5 +126,4 @@ export const useAuthStore = create<AuthState>((set) => ({
     window.location.href = '/auth';
   },
 
-  checkAdmin: (code) => code === 'sert5656',
 }));
