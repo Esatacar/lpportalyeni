@@ -10,6 +10,7 @@ const LP_METRICS = [
   { label: 'OPEX', prefix: 'opex' },
   { label: 'Unrealized Gains', prefix: 'unrealized_gains' },
   { label: 'Realized Gains', prefix: 'realized_gains' },
+  { label: 'Carried Interest (GP)', prefix: 'carried_interest_gp' },
 ];
 
 const DEFAULT_YEARS = [2026, 2025, 2024, 2023, 2022, 2021];
