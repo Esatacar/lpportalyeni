@@ -170,12 +170,21 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
             [columnKey]: numValue,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', company.id);
+          .eq('id', company.id)
+          .select('id');
       });
 
       const results = await Promise.all(updates);
       const hasError = results.some(r => r.error);
-      if (hasError) throw new Error('Some updates failed');
+      if (hasError) {
+        const firstError = results.find(r => r.error);
+        throw new Error(firstError?.error?.message || 'Some updates failed');
+      }
+
+      const allEmpty = results.every(r => !r.data || r.data.length === 0);
+      if (allEmpty && companies.length > 0) {
+        throw new Error('No rows were updated. You may need to sign out and sign back in.');
+      }
 
       setSaveStatus('success');
       onDataSaved?.();

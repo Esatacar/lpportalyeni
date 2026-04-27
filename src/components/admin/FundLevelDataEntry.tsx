@@ -123,11 +123,15 @@ export default function FundLevelDataEntry({ onDataSaved, availableYears }: Fund
       updatePayload['updated_at' as any] = new Date().toISOString() as any;
 
       if (fundId) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('fund_level')
           .update(updatePayload)
-          .eq('id', fundId);
+          .eq('id', fundId)
+          .select('id');
         if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error('No rows were updated. You may need to sign out and sign back in.');
+        }
       } else {
         const { data, error } = await supabase
           .from('fund_level')
