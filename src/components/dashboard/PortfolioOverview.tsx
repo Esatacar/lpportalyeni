@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Briefcase, TrendingUp, TrendingDown, Percent, ChevronDown, ArrowUpDown } from 'lucide-react';
-import { useGlobalViewSettings } from '../../hooks/useGlobalViewSettings';
 
 interface PortfolioData {
   portfolio_company_name: string;
@@ -14,10 +13,50 @@ interface PortfolioOverviewProps {
   formatCurrency: (value: number) => string;
 }
 
+const YEARS = [2026, 2025, 2024, 2023, 2022, 2021];
+const QUARTERS_DESC = [4, 3, 2, 1];
+
+function findLatestQuarterWithData(data: PortfolioData[]): { year: number; quarter: number } {
+  for (const year of YEARS) {
+    for (const quarter of QUARTERS_DESC) {
+      const hasData = data.some(company => {
+        const inv = company[`total_investment_q${quarter}_${year}`];
+        const val = company[`total_value_q${quarter}_${year}`];
+        return (inv !== null && inv !== undefined && inv > 0) ||
+               (val !== null && val !== undefined && val > 0);
+      });
+      if (hasData) return { year, quarter };
+    }
+  }
+  return { year: 2026, quarter: 1 };
+}
+
+function getAvailableQuarterOptions(data: PortfolioData[]) {
+  const options: Array<{ year: number; quarter: number }> = [];
+  for (const year of YEARS) {
+    for (const quarter of QUARTERS_DESC) {
+      const hasData = data.some(company => {
+        const inv = company[`total_investment_q${quarter}_${year}`];
+        const val = company[`total_value_q${quarter}_${year}`];
+        return (inv !== null && inv !== undefined && inv > 0) ||
+               (val !== null && val !== undefined && val > 0);
+      });
+      if (hasData) options.push({ year, quarter });
+    }
+  }
+  return options.length > 0 ? options : [{ year: 2026, quarter: 1 }];
+}
+
 export default function PortfolioOverview({ portfolioData, formatCurrency }: PortfolioOverviewProps) {
   const [showQuarterSelector, setShowQuarterSelector] = useState(false);
-  const { settings, updateSettings } = useGlobalViewSettings();
-  const selectedQuarter = settings.portfolioQuarter;
+
+  const defaultQuarter = useMemo(() => findLatestQuarterWithData(portfolioData), [portfolioData]);
+  const [selectedQuarter, setSelectedQuarter] = useState<{ year: number; quarter: number } | null>(null);
+
+  const activeQuarter = selectedQuarter ?? defaultQuarter;
+
+  const quarterOptions = useMemo(() => getAvailableQuarterOptions(portfolioData), [portfolioData]);
+
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: 'asc' | 'desc';
@@ -26,51 +65,20 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
     direction: 'asc'
   });
 
-  // Function to get available quarters for a given year based on actual data
-  const getAvailableQuarters = (year: number) => {
-    if (!portfolioData || portfolioData.length === 0) return [1];
-    
-    const availableQuarters: number[] = [];
-    const quartersToCheck = [4, 3, 2, 1];
-    
-    for (const quarter of quartersToCheck) {
-      // Check if any portfolio company has data for this quarter
-      const hasData = portfolioData.some(company => {
-        const fields = [
-          `total_investment_q${quarter}_${year}`,
-          `total_value_q${quarter}_${year}`
-        ];
-        
-        return fields.some(field => {
-          const value = company[field];
-          return value !== null && value !== undefined && value > 0;
-        });
-      });
-      
-      if (hasData) {
-        availableQuarters.push(quarter);
-      }
-    }
-    
-    return availableQuarters.length > 0 ? availableQuarters : [1];
-  };
-
-  // Format percentage by multiplying by 100 since the value is stored as a decimal
   const formatPercentage = (value: number) => {
     if (typeof value !== 'number') return '0.0%';
     return `${(value * 100).toFixed(1)}%`;
   };
-  
+
   const calculateMoIC = (investment: number, value: number) => {
     if (investment === 0) return 0;
     return value / investment;
   };
 
   const getQuarterValue = (company: PortfolioData, prefix: string) => {
-    return company[`${prefix}_q${selectedQuarter.quarter}_${selectedQuarter.year}`] || 0;
+    return company[`${prefix}_q${activeQuarter.quarter}_${activeQuarter.year}`] || 0;
   };
 
-  // Format currency with dollar sign
   const formatDollarCurrency = (value: number) => {
     return '$' + new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
@@ -78,12 +86,8 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
     }).format(value);
   };
 
-  const years = [2026, 2025, 2024, 2023, 2022, 2021];
-
-  const handleQuarterSelection = async (year: number, quarter: number) => {
-    await updateSettings({
-      portfolioQuarter: { year, quarter }
-    });
+  const handleQuarterSelection = (year: number, quarter: number) => {
+    setSelectedQuarter({ year, quarter });
     setShowQuarterSelector(false);
   };
 
@@ -139,7 +143,7 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
   });
 
   const SortableHeader: React.FC<{ label: string; sortKey: string }> = ({ label, sortKey }) => (
-    <th 
+    <th
       className="px-4 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100"
       onClick={() => handleSort(sortKey)}
     >
@@ -163,25 +167,21 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
               onClick={() => setShowQuarterSelector(!showQuarterSelector)}
               className="flex items-center space-x-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50"
             >
-              <span>Q{selectedQuarter.quarter} {selectedQuarter.year}</span>
+              <span>Q{activeQuarter.quarter} {activeQuarter.year}</span>
               <ChevronDown className="h-4 w-4" />
             </button>
-            
+
             {showQuarterSelector && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50 border">
                 <div className="p-2 max-h-[300px] overflow-y-auto">
-                  {years.map(year => (
-                    <div key={year}>
-                      {getAvailableQuarters(year).map(quarter => (
-                        <button
-                          key={`${year}-${quarter}`}
-                          onClick={() => handleQuarterSelection(year, quarter)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
-                        >
-                          Q{quarter} {year}
-                        </button>
-                      ))}
-                    </div>
+                  {quarterOptions.map(({ year, quarter }) => (
+                    <button
+                      key={`${year}-${quarter}`}
+                      onClick={() => handleQuarterSelection(year, quarter)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
+                    >
+                      Q{quarter} {year}
+                    </button>
                   ))}
                 </div>
               </div>
