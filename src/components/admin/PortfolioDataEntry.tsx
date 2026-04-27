@@ -226,18 +226,14 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
         } else {
           numValue = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
         }
-        return supabase
-          .from('portfolio_data')
-          .update({
-            [columnKey]: numValue,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', company.id);
+        return { id: company.id, value: numValue };
       });
 
-      const results = await Promise.all(updates);
-      const hasError = results.some(r => r.error);
-      if (hasError) throw new Error('Some updates failed');
+      const { error } = await supabase.rpc('bulk_update_portfolio_metric', {
+        p_column_key: columnKey,
+        p_updates: updates,
+      });
+      if (error) throw error;
 
       setSaveStatus('success');
       onDataSaved?.();

@@ -120,19 +120,14 @@ export default function FundLevelDataEntry({ onDataSaved, availableYears }: Fund
         }
       });
 
-      updatePayload['updated_at' as any] = new Date().toISOString() as any;
-
       if (fundId) {
-        const { data, error } = await supabase
-          .from('fund_level')
-          .update(updatePayload)
-          .eq('id', fundId)
-          .select('id');
+        const { error } = await supabase.rpc('bulk_update_fund_metrics', {
+          p_fund_id: fundId,
+          p_updates: updatePayload,
+        });
         if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error('No rows were updated. You may need to sign out and sign back in.');
-        }
       } else {
+        updatePayload['updated_at' as any] = new Date().toISOString() as any;
         const { data, error } = await supabase
           .from('fund_level')
           .insert([updatePayload])

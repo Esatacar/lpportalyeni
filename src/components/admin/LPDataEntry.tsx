@@ -161,15 +161,19 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
     try {
       const columnKey = `${selectedMetric.prefix}_q${selectedQuarter}_${selectedYear}`;
 
-      for (const company of companies) {
+      const updates = companies.map(company => {
         const rawValue = values[company.id];
-        const numValue = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
-        const { error } = await supabase
-          .from('company_data')
-          .update({ [columnKey]: numValue })
-          .eq('id', company.id);
-        if (error) throw error;
-      }
+        return {
+          id: company.id,
+          value: rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0,
+        };
+      });
+
+      const { error } = await supabase.rpc('bulk_update_company_metric', {
+        p_column_key: columnKey,
+        p_updates: updates,
+      });
+      if (error) throw error;
 
       setSaveStatus('success');
       onDataSaved?.();
