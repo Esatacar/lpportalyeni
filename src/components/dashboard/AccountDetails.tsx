@@ -1,32 +1,32 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Table, ChevronDown, Check } from 'lucide-react';
-import { useGlobalViewSettings } from '../../hooks/useGlobalViewSettings';
 import { accountMetrics } from '../../constants/accountMetrics';
 
-// Function to get available quarters for a given year based on actual data
-const getAvailableQuarters = (year: number, data: any) => {
-  if (!data) return year === 2025 ? [1, 2] : [4, 3, 2, 1];
-  
-  const availableQuarters: number[] = [];
-  const quartersToCheck = [4, 3, 2, 1];
-  
-  for (const quarter of quartersToCheck) {
-    // Check if any metric has data for this quarter
-    const hasData = Object.keys(data).some(key => {
-      if (key.endsWith(`_q${quarter}_${year}`)) {
-        const value = data[key];
-        return value !== null && value !== undefined && value !== 0;
+const YEARS = [2026, 2025, 2024, 2023, 2022, 2021];
+const QUARTERS_DESC = [4, 3, 2, 1];
+
+function findQuartersWithData(data: any) {
+  if (!data) return [];
+
+  const found: Array<{ year: number; quarter: number; value: string }> = [];
+
+  for (const year of YEARS) {
+    for (const quarter of QUARTERS_DESC) {
+      const hasData = Object.keys(data).some(key => {
+        if (key.endsWith(`_q${quarter}_${year}`)) {
+          const v = data[key];
+          return v !== null && v !== undefined && v !== 0;
+        }
+        return false;
+      });
+      if (hasData) {
+        found.push({ year, quarter, value: `${year}-${quarter}` });
       }
-      return false;
-    });
-    
-    if (hasData) {
-      availableQuarters.push(quarter);
     }
   }
-  
-  return availableQuarters.length > 0 ? availableQuarters.sort((a, b) => b - a) : [1];
-};
+
+  return found;
+}
 
 interface AccountDetailsProps {
   quarterOptions: Array<{
@@ -56,57 +56,44 @@ export default function AccountDetails({
   companyData,
   formatCurrency
 }: AccountDetailsProps) {
-  const { settings, updateSettings } = useGlobalViewSettings();
-  
-  // Generate quarter options dynamically based on actual data
-  const years = [2026, 2025, 2024, 2023, 2022, 2021];
-  const quarterOptions = React.useMemo(() => {
-    const options: Array<{
-      year: number;
-      quarter: number;
-      label: string;
-      value: string;
-      selected: boolean;
-    }> = [];
-    
-    for (const year of years) {
-      const availableQuarters = getAvailableQuarters(year, companyData);
-      
-      for (const quarter of availableQuarters) {
-        options.push({
-          year,
-          quarter,
-          label: `Q${quarter} ${year}`,
-          value: `${year}-${quarter}`,
-          selected: settings.accountQuarters.includes(`${year}-${quarter}`)
-        });
+  const allQuarters = useMemo(() => findQuartersWithData(companyData), [companyData]);
+
+  const defaultSelected = useMemo(
+    () => new Set(allQuarters.slice(0, 4).map(q => q.value)),
+    [allQuarters]
+  );
+
+  const [selected, setSelected] = useState<Set<string> | null>(null);
+
+  const activeSelected = selected ?? defaultSelected;
+
+  const quarterOptions = useMemo(() =>
+    allQuarters.map(q => ({
+      year: q.year,
+      quarter: q.quarter,
+      label: `Q${q.quarter} ${q.year}`,
+      value: q.value,
+      selected: activeSelected.has(q.value)
+    })),
+    [allQuarters, activeSelected]
+  );
+
+  const toggleQuarterSelection = (value: string) => {
+    setSelected(prev => {
+      const current = prev ?? new Set(defaultSelected);
+      const next = new Set(current);
+      if (next.has(value)) {
+        next.delete(value);
+      } else {
+        next.add(value);
       }
-    }
-    
-    return options;
-  }, [companyData, settings.accountQuarters]);
-  
-  const toggleQuarterSelection = async (value: string) => {
-    const currentSelected = settings.accountQuarters;
-    const isCurrentlySelected = currentSelected.includes(value);
-    
-    const updatedSelected = isCurrentlySelected
-      ? currentSelected.filter(q => q !== value)
-      : [...currentSelected, value];
-    
-    await updateSettings({
-      accountQuarters: updatedSelected
+      return next;
     });
   };
 
   const selectedQuarters = quarterOptions
-    .filter(option => settings.accountQuarters.includes(option.value))
-    .sort((a, b) => {
-      if (a.year !== b.year) {
-        return a.year - b.year;
-      }
-      return a.quarter - b.quarter;
-    });
+    .filter(o => o.selected)
+    .sort((a, b) => a.year !== b.year ? a.year - b.year : a.quarter - b.quarter);
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -122,13 +109,13 @@ export default function AccountDetails({
               className="flex items-center space-x-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50"
             >
               <span>
-                {selectedQuarters.length === 0 
-                  ? 'Select Quarters' 
+                {selectedQuarters.length === 0
+                  ? 'Select Quarters'
                   : `${selectedQuarters.length} Quarter${selectedQuarters.length === 1 ? '' : 's'} Selected`}
               </span>
               <ChevronDown className="h-4 w-4" />
             </button>
-            
+
             {showQuarterSelector && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-50 border">
                 <div className="p-4">
