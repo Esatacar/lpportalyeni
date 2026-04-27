@@ -160,30 +160,24 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
     setSaveStatus('idle');
     try {
       const columnKey = `${selectedMetric.prefix}_q${selectedQuarter}_${selectedYear}`;
-      const BATCH_SIZE = 10;
 
-      for (let i = 0; i < companies.length; i += BATCH_SIZE) {
-        const batch = companies.slice(i, i + BATCH_SIZE);
-        const batchPromises = batch.map(company => {
-          const rawValue = values[company.id];
-          const numValue = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
-          return supabase
-            .from('company_data')
-            .update({ [columnKey]: numValue, updated_at: new Date().toISOString() })
-            .eq('id', company.id);
-        });
-
-        const results = await Promise.all(batchPromises);
-        const failed = results.find(r => r.error);
-        if (failed?.error) throw new Error(failed.error.message);
+      for (const company of companies) {
+        const rawValue = values[company.id];
+        const numValue = rawValue !== undefined && rawValue !== '' ? parseFloat(rawValue) || 0 : 0;
+        const { error } = await supabase
+          .from('company_data')
+          .update({ [columnKey]: numValue })
+          .eq('id', company.id);
+        if (error) throw error;
       }
 
       setSaveStatus('success');
       onDataSaved?.();
       setTimeout(() => setSaveStatus('idle'), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving LP data:', err);
       setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 4000);
     } finally {
       setSaving(false);
     }
@@ -408,3 +402,5 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
     </div>
   );
 }
+
+export default LPDataEntry
