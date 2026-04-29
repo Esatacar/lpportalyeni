@@ -6,7 +6,7 @@ const PORTFOLIO_METRICS = [
   { label: 'Total Investment', prefix: 'total_investment' },
   { label: 'Total Value', prefix: 'total_value' },
   { label: 'Latest Ownership (%)', prefix: 'latest_ownership', isStatic: true },
-  { label: 'Latest Valuation', prefix: 'latest_valuation', isStatic: true },
+  { label: 'Latest Valuation', prefix: 'latest_valuation', isStatic: true, isText: true },
 ];
 
 const DEFAULT_YEARS = [2026, 2025, 2024, 2023, 2022, 2021];
@@ -16,7 +16,7 @@ interface PortfolioRow {
   id: string;
   portfolio_company_name: string;
   latest_ownership: number;
-  latest_valuation: number;
+  latest_valuation_text: string;
 }
 
 interface PortfolioDataEntryProps {
@@ -45,6 +45,7 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isStaticMetric = selectedMetric.isStatic;
+  const isTextMetric = 'isText' in selectedMetric && selectedMetric.isText;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -72,7 +73,7 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
     try {
       const { data, error } = await supabase
         .from('portfolio_data')
-        .select('id, portfolio_company_name, latest_ownership, latest_valuation')
+        .select('id, portfolio_company_name, latest_ownership, latest_valuation_text')
         .order('portfolio_company_name', { ascending: true });
 
       if (error) throw error;
@@ -86,7 +87,9 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
     setLoading(true);
     try {
       let columnKey: string;
-      if (isStaticMetric) {
+      if (selectedMetric.prefix === 'latest_valuation') {
+        columnKey = 'latest_valuation_text';
+      } else if (isStaticMetric) {
         columnKey = selectedMetric.prefix;
       } else {
         columnKey = `${selectedMetric.prefix}_q${selectedQuarter}_${selectedYear}`;
@@ -102,7 +105,9 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
       const vals: Record<string, string> = {};
       (data || []).forEach((row: any) => {
         const v = row[columnKey];
-        if (v !== null && v !== undefined && v !== 0) {
+        if (isTextMetric) {
+          vals[row.id] = v ? v.toString() : '';
+        } else if (v !== null && v !== undefined && v !== 0) {
           if (selectedMetric.prefix === 'latest_ownership') {
             vals[row.id] = (Number(v) * 100).toString();
           } else {
@@ -121,7 +126,7 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
   };
 
   const handleValueChange = (companyId: string, value: string) => {
-    if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
+    if (isTextMetric || value === '' || /^-?\d*\.?\d*$/.test(value)) {
       setValues(prev => ({ ...prev, [companyId]: value }));
       setSaveStatus('idle');
     }
@@ -159,7 +164,7 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
     lines.forEach((line, i) => {
       const targetIndex = startIndex + i;
       if (targetIndex < portfolioCompanies.length) {
-        const parsed = parseExcelValue(line);
+        const parsed = isTextMetric ? line : parseExcelValue(line);
         newValues[portfolioCompanies[targetIndex].id] = parsed;
         filledCount++;
       }
@@ -170,7 +175,7 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
     setPasteTarget(startCompanyId);
     setPasteCount(filledCount);
     setTimeout(() => { setPasteTarget(null); setPasteCount(0); }, 2500);
-  }, [portfolioCompanies, values]);
+  }, [portfolioCompanies, values, isTextMetric]);
 
   const handleAddCompany = async () => {
     if (!newCompanyName.trim()) return;
@@ -222,6 +227,9 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
 
       const updates = portfolioCompanies.map(company => {
         const rawValue = values[company.id];
+        if (isTextMetric) {
+          return { id: company.id, value: rawValue || '' };
+        }
         let numValue: number;
         if (selectedMetric.prefix === 'latest_ownership') {
           numValue = rawValue !== undefined && rawValue !== '' ? (parseFloat(rawValue) || 0) / 100 : 0;
@@ -250,7 +258,7 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
   };
 
   const getInputPrefix = () => {
-    if (selectedMetric.prefix === 'latest_ownership') return '';
+    if (selectedMetric.prefix === 'latest_ownership' || isTextMetric) return '';
     return '\u20AC';
   };
 
@@ -466,14 +474,14 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
                         )}
                         <input
                           type="text"
-                          inputMode="decimal"
+                          inputMode={isTextMetric ? 'text' : 'decimal'}
                           value={values[company.id] || ''}
                           onChange={(e) => handleValueChange(company.id, e.target.value)}
                           onPaste={(e) => handlePaste(e, company.id)}
-                          placeholder="0"
-                          className={`w-full py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors font-mono ${
-                            getInputPrefix() ? 'pl-8' : 'pl-3'
-                          } ${getInputSuffix() ? 'pr-8' : 'pr-3'}`}
+                          placeholder={isTextMetric ? 'Enter valuation...' : '0'}
+                          className={`w-full py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-300 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors ${
+                            isTextMetric ? '' : 'font-mono '
+                          }${getInputPrefix() ? 'pl-8' : 'pl-3'} ${getInputSuffix() ? 'pr-8' : 'pr-3'}`}
                         />
                         {getInputSuffix() && (
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{getInputSuffix()}</span>

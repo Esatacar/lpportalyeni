@@ -4,7 +4,7 @@ import { Briefcase, TrendingUp, TrendingDown, Percent, ChevronDown, ArrowUpDown 
 interface PortfolioData {
   portfolio_company_name: string;
   latest_ownership: number;
-  latest_valuation: number;
+  latest_valuation_text: string;
   [key: string]: any;
 }
 
@@ -79,13 +79,6 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
     return company[`${prefix}_q${activeQuarter.quarter}_${activeQuarter.year}`] || 0;
   };
 
-  const formatDollarCurrency = (value: number) => {
-    return '$' + new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
   const handleQuarterSelection = (year: number, quarter: number) => {
     setSelectedQuarter({ year, quarter });
     setShowQuarterSelector(false);
@@ -130,8 +123,8 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
         bValue = b.latest_ownership;
         break;
       case 'valuation':
-        aValue = a.latest_valuation;
-        bValue = b.latest_valuation;
+        aValue = (a.latest_valuation_text || '').toLowerCase();
+        bValue = (b.latest_valuation_text || '').toLowerCase();
         break;
       default:
         return 0;
@@ -252,7 +245,7 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">
-                        {formatDollarCurrency(company.latest_valuation)}
+                        {company.latest_valuation_text || '-'}
                       </span>
                     </td>
                   </tr>
