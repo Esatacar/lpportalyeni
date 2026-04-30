@@ -53,12 +53,11 @@ Deno.serve(async (req: Request) => {
       (u: any) => u.email?.toLowerCase() === email.toLowerCase()
     );
 
-    // Don't reveal whether email exists
     if (!user) {
       return new Response(
-        JSON.stringify({ success: true }),
+        JSON.stringify({ error: "No account found with this email address" }),
         {
-          status: 200,
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
