@@ -65,11 +65,11 @@ In the meantime, you can sign in to check your approval status.`);
   return (
     <div className="min-h-screen flex">
       {/* Left panel - dark navy with logo */}
-      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] items-start justify-start p-16">
+      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] items-start justify-start p-10">
         <img
           src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
           alt="e2vc"
-          className="w-[768px] mt-12"
+          className="w-[768px]"
         />
       </div>
 
