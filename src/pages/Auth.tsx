@@ -66,12 +66,11 @@ In the meantime, you can sign in to check your approval status.`);
     <div className="min-h-screen flex">
       {/* Left panel - dark navy with logo */}
       <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] items-start justify-start p-16">
-        <span className="text-7xl text-white font-normal leading-none mt-12">
-          <span className="font-[650] inline-block tracking-[0.05em]">e</span>
-          <span className="font-[650] inline-block text-[0.75em] translate-y-[0.012em] -ml-[0.05em] mr-[0.05em]">2</span>
-          <span className="font-light inline-block text-white/80">v</span>
-          <span className="font-light inline-block text-white/60 uppercase">c</span>
-        </span>
+        <img
+          src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
+          alt="e2vc"
+          className="h-20 mt-12"
+        />
       </div>
 
       {/* Right panel - light gray with form */}
@@ -79,12 +78,11 @@ In the meantime, you can sign in to check your approval status.`);
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-10">
-            <span className="text-5xl text-[#0a2547] font-normal leading-none">
-              <span className="font-[650] inline-block tracking-[0.05em]">e</span>
-              <span className="font-[650] inline-block text-[0.75em] translate-y-[0.012em] -ml-[0.05em] mr-[0.05em]">2</span>
-              <span className="font-light inline-block">v</span>
-              <span className="font-light inline-block">c</span>
-            </span>
+            <img
+              src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
+              alt="e2vc"
+              className="h-14"
+            />
           </div>
 
           <h1 className="text-3xl font-bold text-[#0a2547] mb-8 text-center">
