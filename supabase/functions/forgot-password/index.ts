@@ -180,7 +180,7 @@ Deno.serve(async (req: Request) => {
         "",
         "This code expires in 15 minutes.",
         "",
-        "If you did not request this, please ignore this email.",
+        "If you did not request this, please contact e2vc team.",
       ].join("\n"),
     });
 
