@@ -92,20 +92,8 @@ export default function FundSummary({
     return availableQuarters.length > 0 ? availableQuarters : [1];
   };
 
-  const getColorClass = (color: string) => {
-    const colorMap: Record<string, { bg: string, text: string, border: string }> = {
-      blue: { bg: 'bg-[#0a1628]/5', text: 'text-[#0a2547]', border: 'border-[#0a2547]/15' },
-      purple: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
-      green: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-      orange: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-      indigo: { bg: 'bg-[#0a1628]/5', text: 'text-[#0a2547]', border: 'border-[#0a2547]/15' },
-      pink: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
-      yellow: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
-      red: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
-      teal: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
-      gray: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' }
-    };
-    return colorMap[color];
+  const getColorClass = () => {
+    return { bg: 'bg-[#0a1628]', text: 'text-[#6dd8b0]', border: 'border-[#0a1628]' };
   };
 
   const getPerformanceData = () => {
@@ -208,8 +196,8 @@ export default function FundSummary({
       </div>
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-          {metrics.map(({ label, prefix, icon: Icon, color }) => {
-            const colorClasses = getColorClass(color);
+          {metrics.map(({ label, prefix, icon: Icon }) => {
+            const colorClasses = getColorClass();
             return (
               <div
                 key={prefix}
@@ -218,7 +206,7 @@ export default function FundSummary({
                 <div className="flex items-start justify-between">
                   <div>
                     <p className={`text-sm font-medium ${colorClasses.text}`}>{label}</p>
-                    <p className="mt-2 text-2xl font-bold text-gray-900">
+                    <p className="mt-2 text-2xl font-bold text-white">
                       {getValue(prefix)}
                     </p>
                   </div>
