@@ -52,19 +52,18 @@ Deno.serve(async (req: Request) => {
     await client.sendAsync({
       from: "esat@e2.vc",
       to: record.email,
-      subject: "Your e2.vc LP Portal Account Has Been Approved",
+      subject: "Your e2vc LP Portal Account Has Been Approved",
       text: [
         `Hi ${userName},`,
         "",
-        "Great news! Your account on the e2.vc LP Portal has been approved.",
+        "Great news! Your account on the e2vc LP Portal has been approved.",
         "",
-        "You can now sign in and access your investor dashboard:",
-        "https://e2vc-lp.netlify.app",
+        "You can now sign in and access your investor dashboard: https://lpportal.e2.vc",
         "",
         "If you have any questions, please don't hesitate to reach out.",
         "",
         "Best regards,",
-        "e2.vc Team",
+        "e2vc Team",
       ].join("\n"),
     });
 
