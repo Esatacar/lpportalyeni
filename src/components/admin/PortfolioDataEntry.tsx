@@ -7,6 +7,7 @@ const PORTFOLIO_METRICS = [
   { label: 'Total Value', prefix: 'total_value' },
   { label: 'Latest Ownership (%)', prefix: 'latest_ownership', isStatic: true },
   { label: 'Latest Valuation', prefix: 'latest_valuation', isStatic: true, isText: true },
+  { label: 'Website URL', prefix: 'website_url', isStatic: true, isText: true },
 ];
 
 const DEFAULT_YEARS = [2026, 2025, 2024, 2023, 2022, 2021];
@@ -17,6 +18,7 @@ interface PortfolioRow {
   portfolio_company_name: string;
   latest_ownership: number;
   latest_valuation_text: string;
+  website_url: string;
 }
 
 interface PortfolioDataEntryProps {
@@ -73,7 +75,7 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
     try {
       const { data, error } = await supabase
         .from('portfolio_data')
-        .select('id, portfolio_company_name, latest_ownership, latest_valuation_text')
+        .select('id, portfolio_company_name, latest_ownership, latest_valuation_text, website_url')
         .order('portfolio_company_name', { ascending: true });
 
       if (error) throw error;

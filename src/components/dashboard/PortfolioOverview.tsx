@@ -5,6 +5,7 @@ interface PortfolioData {
   portfolio_company_name: string;
   latest_ownership: number;
   latest_valuation_text: string;
+  website_url?: string;
   [key: string]: any;
 }
 
@@ -208,9 +209,20 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
                   <tr key={company.portfolio_company_name} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="text-base font-medium text-gray-900">
-                          {company.portfolio_company_name}
-                        </div>
+                        {company.website_url ? (
+                          <a
+                            href={company.website_url.startsWith('http') ? company.website_url : `https://${company.website_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-base font-medium text-[#0a2547] hover:text-[#6dd8b0] underline underline-offset-2 transition-colors"
+                          >
+                            {company.portfolio_company_name}
+                          </a>
+                        ) : (
+                          <div className="text-base font-medium text-gray-900">
+                            {company.portfolio_company_name}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
