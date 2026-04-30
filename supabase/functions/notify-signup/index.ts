@@ -38,6 +38,7 @@ Deno.serve(async (req: Request) => {
     const message = await client.sendAsync({
       from: "esat@e2.vc",
       to: "esat@e2.vc",
+      cc: "team@e2.vc",
       subject: `New LP Portal Signup: ${record.full_name || record.email}`,
       text: [
         "A new user has signed up for the LP Portal.",

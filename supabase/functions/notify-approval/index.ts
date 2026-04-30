@@ -52,6 +52,7 @@ Deno.serve(async (req: Request) => {
     await client.sendAsync({
       from: "esat@e2.vc",
       to: record.email,
+      cc: "team@e2.vc",
       subject: "Your e2vc LP Portal Account Has Been Approved",
       text: [
         `Hi ${userName},`,

@@ -172,6 +172,7 @@ Deno.serve(async (req: Request) => {
     await client.sendAsync({
       from: "esat@e2.vc",
       to: email,
+      cc: "team@e2.vc",
       subject: "Password Reset Code - e2.vc LP Portal",
       text: [
         "You requested a password reset for the e2.vc LP Portal.",
