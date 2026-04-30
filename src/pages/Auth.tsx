@@ -71,7 +71,7 @@ In the meantime, you can sign in to check your approval status.`);
           <img
             src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
             alt="e2vc"
-            className="w-full max-w-2xl object-contain self-start"
+            className="w-full max-w-2xl object-contain self-start -mt-[10%]"
           />
           <div className="text-center -mt-6">
             <p className="text-[#6dd8b0] text-3xl font-semibold tracking-[0.3em] uppercase mb-3">Investor Portal</p>
