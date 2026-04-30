@@ -174,7 +174,7 @@ Deno.serve(async (req: Request) => {
       to: email,
       subject: "Password Reset Code - e2.vc LP Portal",
       text: [
-        "You requested a password reset for the e2.vc LP Portal.",
+        "You requested a password reset for the e2vc LP Portal.",
         "",
         `Your reset code is: ${resetCode}`,
         "",
