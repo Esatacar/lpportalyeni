@@ -367,12 +367,11 @@ export default function LPDashboard() {
               <p className="text-sm text-gray-400">Welcome, {user?.full_name}</p>
             </div>
             <div className="flex justify-center">
-              <span className="text-3xl text-white font-normal leading-none">
-                <span className="font-[650] inline-block tracking-[0.05em]">e</span>
-                <span className="font-[650] inline-block text-[0.75em] translate-y-[0.012em] -ml-[0.05em] mr-[0.05em]">2</span>
-                <span className="font-light inline-block">v</span>
-                <span className="font-light inline-block">c</span>
-              </span>
+              <img
+                src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
+                alt="e2vc"
+                className="h-10 object-contain"
+              />
             </div>
             <div className="flex justify-end">
               <button
