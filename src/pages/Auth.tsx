@@ -65,7 +65,7 @@ In the meantime, you can sign in to check your approval status.`);
   return (
     <div className="min-h-screen flex">
       {/* Left panel - dark navy with logo */}
-      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] flex-col items-center justify-start pt-[10vh] p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] flex-col items-center justify-start pt-[5vh] p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a1628] via-[#0a1628]/80 to-[#0a1628]" />
         <div className="relative z-10 flex flex-col items-center">
           <img
