@@ -69,9 +69,9 @@ In the meantime, you can sign in to check your approval status.`);
         <img
           src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
           alt="e2vc"
-          className="w-full"
+          className="w-full object-cover object-center max-h-[45vh]"
         />
-        <h2 className="text-white text-5xl font-bold mt-3 font-sans text-center leading-tight">
+        <h2 className="text-white text-5xl font-bold -mt-10 font-sans text-center leading-tight">
           Fund II<br />LP Portal
         </h2>
       </div>
