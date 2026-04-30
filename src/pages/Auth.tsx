@@ -65,13 +65,13 @@ In the meantime, you can sign in to check your approval status.`);
   return (
     <div className="min-h-screen flex">
       {/* Left panel - dark navy with logo */}
-      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] flex-col items-center justify-start pt-[5vh] p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] flex-col justify-start pt-[2vh] px-8 p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a1628] via-[#0a1628]/80 to-[#0a1628]" />
-        <div className="relative z-10 flex flex-col items-center">
+        <div className="relative z-10 flex flex-col">
           <img
             src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
             alt="e2vc"
-            className="w-full max-w-2xl object-contain mb-10"
+            className="w-full max-w-2xl object-contain mb-10 self-start"
           />
           <div className="text-center">
             <p className="text-[#6dd8b0] text-3xl font-semibold tracking-[0.3em] uppercase mb-3">Investor Portal</p>
