@@ -69,7 +69,7 @@ In the meantime, you can sign in to check your approval status.`);
         <img
           src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
           alt="e2vc"
-          className="w-48 mt-12"
+          className="w-[768px] mt-12"
         />
       </div>
 
