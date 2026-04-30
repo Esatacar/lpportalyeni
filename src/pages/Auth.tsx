@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { Lock, Mail, Building2, User, AlertCircle, CheckCircle2 } from 'lucide-react';
-import Logo from '../components/Logo';
+import { Eye, EyeOff, KeyRound, Building2, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function Auth() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuthStore();
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -63,146 +63,152 @@ In the meantime, you can sign in to check your approval status.`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <div className="flex flex-col items-center mb-6">
-          <Logo size="large" />
-        </div>
+    <div className="min-h-screen flex">
+      {/* Left panel - dark navy with logo */}
+      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] items-start justify-start p-16">
+        <span className="text-7xl text-white font-normal leading-none mt-12">
+          <span className="font-[650] inline-block tracking-[0.05em]">e</span>
+          <span className="font-[650] inline-block text-[0.75em] translate-y-[0.012em] -ml-[0.05em] mr-[0.05em]">2</span>
+          <span className="font-light inline-block text-white/80">v</span>
+          <span className="font-light inline-block text-white/60 uppercase">c</span>
+        </span>
+      </div>
 
-        {/* Sign In/Sign Up Toggle */}
-        <div className="flex gap-4 mb-6">
-          <button
-            onClick={() => {
-              setIsSignUp(false);
-              setError('');
-              setSuccess('');
-              setFormData({
-                email: '',
-                password: '',
-                fullName: '',
-                companyName: '',
-              });
-            }}
-            className={`flex-1 py-2 px-4 rounded-md text-center transition-colors ${
-              !isSignUp
-                ? 'bg-[#0a2547] text-white'
-                : 'bg-gray-100 text-[#0a2547] hover:bg-gray-200'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => {
-              setIsSignUp(true);
-              setError('');
-              setSuccess('');
-              setFormData({
-                email: '',
-                password: '',
-                fullName: '',
-                companyName: '',
-              });
-            }}
-            className={`flex-1 py-2 px-4 rounded-md text-center transition-colors ${
-              isSignUp
-                ? 'bg-[#0a2547] text-white'
-                : 'bg-gray-100 text-[#0a2547] hover:bg-gray-200'
-            }`}
-          >
-            Sign Up
-          </button>
-        </div>
-
-        <h1 className="text-2xl font-bold text-[#0a2547] mb-6 text-center">
-          {isSignUp ? 'Create Account' : 'LP Portal'}
-        </h1>
-
-        {error && (
-          <div className="mb-4 p-4 rounded-md bg-red-50 text-red-800 border border-red-200">
-            <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 mr-2 text-red-500" />
-              <p className="text-sm whitespace-pre-line">{error}</p>
-            </div>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 p-4 rounded-md bg-green-50 text-green-800 border border-green-200">
-            <div className="flex items-start">
-              <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 mt-0.5" />
-              <p className="text-sm whitespace-pre-line">{success}</p>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="pl-10 w-full p-2 border rounded-md focus:ring-[#0a2547] focus:border-[#0a2547]"
-                required
-              />
-            </div>
+      {/* Right panel - light gray with form */}
+      <div className="flex-1 bg-[#f0f1f3] flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex justify-center mb-10">
+            <span className="text-5xl text-[#0a2547] font-normal leading-none">
+              <span className="font-[650] inline-block tracking-[0.05em]">e</span>
+              <span className="font-[650] inline-block text-[0.75em] translate-y-[0.012em] -ml-[0.05em] mr-[0.05em]">2</span>
+              <span className="font-light inline-block">v</span>
+              <span className="font-light inline-block">c</span>
+            </span>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="pl-10 w-full p-2 border rounded-md focus:ring-[#0a2547] focus:border-[#0a2547]"
-                required
-              />
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold text-[#0a2547] mb-8 text-center">
+            {isSignUp ? 'Sign Up' : 'Sign In'}
+          </h1>
 
-          {isSignUp && (
-            <>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="pl-10 w-full p-2 border rounded-md focus:ring-[#0a2547] focus:border-[#0a2547]"
-                    required
-                  />
-                </div>
+          {error && (
+            <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-800 border border-red-200">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2 text-red-500 shrink-0" />
+                <p className="text-sm whitespace-pre-line">{error}</p>
               </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Company Name</label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="text"
-                    value={formData.companyName}
-                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                    className="pl-10 w-full p-2 border rounded-md focus:ring-[#0a2547] focus:border-[#0a2547]"
-                    required
-                  />
-                </div>
-              </div>
-            </>
+            </div>
           )}
 
-          <button
-            type="submit"
-            className="w-full bg-[#0a2547] text-white py-3 px-4 rounded-md hover:bg-[#1a365d] transition-colors font-medium text-lg"
-          >
-            {isSignUp ? 'Create Account' : 'Sign In'}
-          </button>
-        </form>
+          {success && (
+            <div className="mb-6 p-4 rounded-lg bg-green-50 text-green-800 border border-green-200">
+              <div className="flex items-start">
+                <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 mt-0.5 shrink-0" />
+                <p className="text-sm whitespace-pre-line">{success}</p>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-5 py-3.5 border border-gray-300 rounded-full bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors"
+                required
+              />
+            </div>
+
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full px-5 py-3.5 border border-gray-300 rounded-full bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors pr-12"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+
+            {isSignUp && (
+              <>
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    className="w-full px-5 py-3.5 border border-gray-300 rounded-full bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Company Name"
+                    value={formData.companyName}
+                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    className="w-full px-5 py-3.5 border border-gray-300 rounded-full bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#0a2547] focus:ring-1 focus:ring-[#0a2547] outline-none transition-colors"
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            {!isSignUp && (
+              <div className="flex items-center gap-2">
+                <KeyRound className="h-4 w-4 text-[#0a2547]" />
+                <button
+                  type="button"
+                  className="text-sm font-medium text-[#0a2547] hover:underline"
+                >
+                  Forgot Password
+                </button>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-4 rounded-full bg-[#6dd8b0] text-[#0a2547] font-semibold text-base hover:bg-[#5cc9a0] transition-colors shadow-sm"
+            >
+              {isSignUp ? 'Sign Up' : 'Sign In'}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-gray-600">
+            {isSignUp ? (
+              <>
+                Already have an account?{' '}
+                <button
+                  onClick={() => { setIsSignUp(false); setError(''); setSuccess(''); }}
+                  className="font-medium text-[#0a2547] underline hover:text-[#1a365d]"
+                >
+                  Sign In
+                </button>
+              </>
+            ) : (
+              <>
+                Don't have an account yet?{' '}
+                <button
+                  onClick={() => { setIsSignUp(true); setError(''); setSuccess(''); }}
+                  className="font-medium text-[#0a2547] underline hover:text-[#1a365d]"
+                >
+                  Sign Up
+                </button>
+              </>
+            )}
+          </p>
+        </div>
       </div>
     </div>
   );
