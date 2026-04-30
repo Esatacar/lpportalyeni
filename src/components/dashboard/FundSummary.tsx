@@ -94,12 +94,12 @@ export default function FundSummary({
 
   const getColorClass = (color: string) => {
     const colorMap: Record<string, { bg: string, text: string, border: string }> = {
-      blue: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-      purple: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
-      green: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
-      orange: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-      indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
-      pink: { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
+      blue: { bg: 'bg-[#0a1628]/5', text: 'text-[#0a2547]', border: 'border-[#0a2547]/15' },
+      purple: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
+      green: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+      orange: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+      indigo: { bg: 'bg-[#0a1628]/5', text: 'text-[#0a2547]', border: 'border-[#0a2547]/15' },
+      pink: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
       yellow: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
       red: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
       teal: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
@@ -148,12 +148,12 @@ export default function FundSummary({
       const irr = payload.find((p: any) => p.dataKey === 'irr')?.value || 0;
 
       return (
-        <div className="bg-white p-3 border rounded shadow">
-          <p className="text-sm font-medium mb-1">{label}</p>
-          <p className="text-sm text-[#0a2547]">
+        <div className="bg-[#0a1628] p-3 rounded-lg shadow-lg border border-white/10">
+          <p className="text-sm font-medium mb-1 text-white">{label}</p>
+          <p className="text-sm text-gray-300">
             TVPI: {tvpi.toFixed(2)}x
           </p>
-          <p className="text-sm text-[#0a2547]">
+          <p className="text-sm text-gray-300">
             IRR: {formatPercentage(irr)}
           </p>
         </div>
@@ -163,18 +163,18 @@ export default function FundSummary({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="p-5 bg-indigo-50 border-b border-indigo-100">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="p-5 bg-[#0a1628] rounded-t-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <BarChart4 className="h-6 w-6 text-indigo-600" />
-            <h3 className="ml-2 text-lg font-semibold text-indigo-900">Fund Financial Summary</h3>
+            <BarChart4 className="h-6 w-6 text-[#6dd8b0]" />
+            <h3 className="ml-2 text-lg font-semibold text-white">Fund Financial Summary</h3>
           </div>
           {setShowPeriodSelector && setSelectedPeriod && (
             <div className="relative" ref={periodSelectorRef}>
               <button
                 onClick={() => setShowPeriodSelector(!showPeriodSelector)}
-                className="flex items-center space-x-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50"
+                className="flex items-center space-x-2 px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-white transition-colors"
               >
                 <span>Q{effectivePeriod.quarter} {effectivePeriod.year}</span>
                 <ChevronDown className="h-4 w-4" />
@@ -229,10 +229,10 @@ export default function FundSummary({
           })}
         </div>
 
-        <div className="mt-8 border-t pt-8">
+        <div className="mt-8 border-t border-gray-100 pt-8">
           <div className="flex items-center mb-4">
-            <LineChart className="h-6 w-6 text-indigo-600 mr-2" />
-            <h4 className="text-lg font-semibold text-gray-900">Performance Metrics</h4>
+            <LineChart className="h-6 w-6 text-[#0a2547] mr-2" />
+            <h4 className="text-lg font-semibold text-[#0a2547]">Performance Metrics</h4>
           </div>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -273,12 +273,12 @@ export default function FundSummary({
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
                 />
-                <Line 
+                <Line
                   yAxisId="right"
-                  type="monotone" 
-                  dataKey="irr" 
+                  type="monotone"
+                  dataKey="irr"
                   name="IRR"
-                  stroke="#27E4A5" 
+                  stroke="#6dd8b0"
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}

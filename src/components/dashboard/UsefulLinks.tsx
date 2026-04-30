@@ -52,7 +52,7 @@ function SortableLink({
     <div 
       ref={setNodeRef}
       style={style}
-      className={`p-4 border rounded-lg hover:bg-gray-50 transition-colors ${isDragging ? 'shadow-lg' : ''}`}
+      className={`p-4 border border-gray-100 rounded-lg hover:bg-[#0a1628]/[0.02] transition-colors ${isDragging ? 'shadow-lg' : ''}`}
     >
       <div className="flex items-start">
         {isAdmin && (
@@ -71,7 +71,7 @@ function SortableLink({
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-lg font-medium text-blue-600 hover:text-blue-800 flex items-center"
+                className="text-lg font-medium text-[#0a2547] hover:text-[#6dd8b0] flex items-center transition-colors"
               >
                 {link.title}
                 <ExternalLink className="h-4 w-4 ml-1" />
@@ -140,17 +140,17 @@ export default function UsefulLinks({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="p-5 bg-blue-50 border-b border-blue-100">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-5 bg-[#0a1628] rounded-t-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Link2 className="h-6 w-6 text-blue-600" />
-            <h3 className="ml-2 text-lg font-semibold text-blue-900">Useful Links</h3>
+            <Link2 className="h-6 w-6 text-[#6dd8b0]" />
+            <h3 className="ml-2 text-lg font-semibold text-white">Useful Links</h3>
           </div>
           {isAdmin && onAdd && (
             <button
               onClick={onAdd}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-[#6dd8b0] text-[#0a1628] rounded-lg font-medium hover:bg-[#5cc9a0] transition-colors"
             >
               Add Link
             </button>

@@ -96,17 +96,17 @@ export default function AccountDetails({
     .sort((a, b) => a.year !== b.year ? a.year - b.year : a.quarter - b.quarter);
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="p-5 bg-blue-50 border-b border-blue-100">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-5 bg-[#0a1628] rounded-t-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Table className="h-6 w-6 text-blue-600" />
-            <h3 className="ml-2 text-lg font-semibold text-blue-900">LP Account Details</h3>
+            <Table className="h-6 w-6 text-[#6dd8b0]" />
+            <h3 className="ml-2 text-lg font-semibold text-white">LP Account Details</h3>
           </div>
           <div className="relative" ref={quarterSelectorRef}>
             <button
               onClick={() => setShowQuarterSelector(!showQuarterSelector)}
-              className="flex items-center space-x-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50"
+              className="flex items-center space-x-2 px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-white transition-colors"
             >
               <span>
                 {selectedQuarters.length === 0
@@ -145,13 +145,13 @@ export default function AccountDetails({
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 bg-[#0a1628]/5 text-left text-xs font-medium text-[#0a2547] uppercase tracking-wider">
                   Metric
                 </th>
                 {selectedQuarters.map(({ year, quarter }) => (
                   <th
                     key={`${year}-${quarter}`}
-                    className="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-4 py-3 bg-[#0a1628]/5 text-left text-xs font-medium text-[#0a2547] uppercase tracking-wider"
                   >
                     Q{quarter} {year}
                   </th>

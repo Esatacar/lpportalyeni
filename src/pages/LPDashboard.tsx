@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { LogOut } from 'lucide-react';
-import Logo from '../components/Logo';
 import BasicInfo from '../components/dashboard/BasicInfo';
 import Commitment from '../components/dashboard/Commitment';
 import QuarterPerformance from '../components/dashboard/QuarterPerformance';
@@ -317,16 +316,16 @@ export default function LPDashboard() {
       const isPositive = difference > 0;
 
       return (
-        <div className="bg-white p-3 border rounded shadow">
-          <p className="text-sm font-medium mb-1">{label}</p>
-          <p className="text-sm text-[#0a2547]">
+        <div className="bg-[#0a1628] p-3 rounded-lg shadow-lg border border-white/10">
+          <p className="text-sm font-medium mb-1 text-white">{label}</p>
+          <p className="text-sm text-gray-300">
             Paid Capital: {formatCurrency(paidCapital)}
           </p>
-          <p className="text-sm text-[#0a2547]">
+          <p className="text-sm text-gray-300">
             NAV: {formatCurrency(nav)}
           </p>
           <p className={`text-sm font-medium mt-1 ${
-            isPositive ? 'text-[#76EEC6]' : 'text-red-600'
+            isPositive ? 'text-[#6dd8b0]' : 'text-[#FC5858]'
           }`}>
             Gains/(Losses): {formatCurrency(difference)}
           </p>
@@ -359,21 +358,26 @@ export default function LPDashboard() {
   const selectedQuarters = getSelectedQuarters();
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="min-h-screen bg-[#f0f1f3]">
+      <nav className="bg-[#0a1628] shadow-lg">
+        <div className="mx-auto px-6 sm:px-10 lg:px-16 py-4">
           <div className="grid grid-cols-3 items-center">
             <div>
-              <h1 className="text-2xl font-bold text-[#0a2547]">LP Dashboard</h1>
-              <p className="text-sm text-gray-600">Welcome, {user?.full_name}</p>
+              <h1 className="text-xl font-semibold text-white">LP Dashboard</h1>
+              <p className="text-sm text-gray-400">Welcome, {user?.full_name}</p>
             </div>
             <div className="flex justify-center">
-              <Logo />
+              <span className="text-3xl text-white font-normal leading-none">
+                <span className="font-[650] inline-block tracking-[0.05em]">e</span>
+                <span className="font-[650] inline-block text-[0.75em] translate-y-[0.012em] -ml-[0.05em] mr-[0.05em]">2</span>
+                <span className="font-light inline-block">v</span>
+                <span className="font-light inline-block">c</span>
+              </span>
             </div>
             <div className="flex justify-end">
               <button
                 onClick={signOut}
-                className="flex items-center text-gray-600 hover:text-gray-900"
+                className="flex items-center text-gray-400 hover:text-white transition-colors"
               >
                 <LogOut className="h-5 w-5 mr-2" />
                 Sign Out
@@ -383,7 +387,7 @@ export default function LPDashboard() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto px-6 sm:px-10 lg:px-16 py-8">
         <div className="space-y-6">
           <FundSummary
             fundLevelData={fundLevelData}

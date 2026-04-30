@@ -137,28 +137,28 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
 
   const SortableHeader: React.FC<{ label: string; sortKey: string }> = ({ label, sortKey }) => (
     <th
-      className="px-4 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100"
+      className="px-4 py-3 bg-[#0a1628]/5 cursor-pointer hover:bg-[#0a1628]/10 transition-colors text-left text-xs font-medium text-[#0a2547] uppercase tracking-wider"
       onClick={() => handleSort(sortKey)}
     >
       <div className="flex items-center space-x-1">
         <span>{label}</span>
-        <ArrowUpDown className="h-4 w-4" />
+        <ArrowUpDown className="h-3 w-3" />
       </div>
     </th>
   );
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="p-5 bg-orange-50 border-b border-orange-100">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-5 bg-[#0a1628] rounded-t-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Briefcase className="h-6 w-6 text-orange-600" />
-            <h3 className="ml-2 text-lg font-semibold text-orange-900">Portfolio Company Overview</h3>
+            <Briefcase className="h-6 w-6 text-[#6dd8b0]" />
+            <h3 className="ml-2 text-lg font-semibold text-white">Portfolio Company Overview</h3>
           </div>
           <div className="relative">
             <button
               onClick={() => setShowQuarterSelector(!showQuarterSelector)}
-              className="flex items-center space-x-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50"
+              className="flex items-center space-x-2 px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-white transition-colors"
             >
               <span>Q{activeQuarter.quarter} {activeQuarter.year}</span>
               <ChevronDown className="h-4 w-4" />

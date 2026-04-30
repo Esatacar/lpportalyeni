@@ -14,11 +14,11 @@ interface FinancialOverviewProps {
 
 export default function FinancialOverview({ data, formatMillions, CustomTooltip }: FinancialOverviewProps) {
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100">
       <div className="px-4 py-5 sm:p-6">
         <div className="flex items-center mb-4">
-          <TrendingUp className="h-6 w-6 text-blue-600 mr-2" />
-          <h2 className="text-xl font-semibold text-gray-900">LP Financial Overview</h2>
+          <TrendingUp className="h-6 w-6 text-[#0a2547] mr-2" />
+          <h2 className="text-xl font-semibold text-[#0a2547]">LP Financial Overview</h2>
         </div>
         <div className="h-[600px] mt-4">
           <ResponsiveContainer width="100%" height="100%">
@@ -43,15 +43,17 @@ export default function FinancialOverview({ data, formatMillions, CustomTooltip 
               <Legend 
                 wrapperStyle={{ paddingTop: '20px' }}
               />
-              <Bar 
-                dataKey="paidCapital" 
-                name="Paid Capital" 
-                fill="#60CFAE" 
+              <Bar
+                dataKey="paidCapital"
+                name="Paid Capital"
+                fill="#6dd8b0"
+                radius={[4, 4, 0, 0]}
               />
-              <Bar 
-                dataKey="nav" 
-                name="NAV" 
-                fill="#0a2547" 
+              <Bar
+                dataKey="nav"
+                name="NAV"
+                fill="#0a1628"
+                radius={[4, 4, 0, 0]}
               />
             </BarChart>
           </ResponsiveContainer>

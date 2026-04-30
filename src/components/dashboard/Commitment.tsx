@@ -8,16 +8,16 @@ interface CommitmentProps {
 
 export default function Commitment({ totalCommitment, formatCurrency }: CommitmentProps) {
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="p-5 bg-emerald-50 border-b border-emerald-100">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-5 bg-[#0a1628]">
         <div className="flex items-center">
-          <Wallet className="h-6 w-6 text-emerald-600" />
-          <h3 className="ml-2 text-lg font-semibold text-emerald-900">Total Commitment</h3>
+          <Wallet className="h-6 w-6 text-[#6dd8b0]" />
+          <h3 className="ml-2 text-lg font-semibold text-white">Total Commitment</h3>
         </div>
       </div>
       <div className="p-5">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Committed Investment</h3>
-        <p className="text-2xl font-bold text-[#0a2547]">
+        <h3 className="text-sm font-medium text-gray-500 mb-1">Committed Investment</h3>
+        <p className="text-xl font-bold text-[#0a2547]">
           {formatCurrency(totalCommitment)}
         </p>
       </div>
