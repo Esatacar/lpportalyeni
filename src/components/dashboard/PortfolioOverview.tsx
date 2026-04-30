@@ -137,7 +137,7 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
 
   const SortableHeader: React.FC<{ label: string; sortKey: string }> = ({ label, sortKey }) => (
     <th
-      className="px-4 py-3 bg-[#0a1628]/5 cursor-pointer hover:bg-[#0a1628]/10 transition-colors text-left text-xs font-medium text-[#0a2547] uppercase tracking-wider"
+      className="px-4 py-3 bg-[#0a1628]/5 cursor-pointer hover:bg-[#0a1628]/10 transition-colors text-left text-sm font-medium text-[#0a2547] uppercase tracking-wider"
       onClick={() => handleSort(sortKey)}
     >
       <div className="flex items-center space-x-1">
@@ -208,18 +208,18 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
                   <tr key={company.portfolio_company_name} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-base font-medium text-gray-900">
                           {company.portfolio_company_name}
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">
+                      <span className="text-base text-gray-900">
                         {formatCurrency(investment)}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">
+                      <span className="text-base text-gray-900">
                         {formatCurrency(value)}
                       </span>
                     </td>
@@ -228,7 +228,7 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
                         <TrendIcon className={`h-4 w-4 mr-1 ${
                           isPositiveReturn ? 'text-green-500' : 'text-red-500'
                         }`} />
-                        <span className={`text-sm font-medium ${
+                        <span className={`text-base font-medium ${
                           isPositiveReturn ? 'text-green-600' : 'text-red-600'
                         }`}>
                           {moic.toFixed(2)}x
@@ -238,13 +238,13 @@ export default function PortfolioOverview({ portfolioData, formatCurrency }: Por
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Percent className="h-4 w-4 text-gray-400 mr-1" />
-                        <span className="text-sm text-gray-900">
+                        <span className="text-base text-gray-900">
                           {formatPercentage(company.latest_ownership)}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">
+                      <span className="text-base text-gray-900">
                         {company.latest_valuation_text || '-'}
                       </span>
                     </td>

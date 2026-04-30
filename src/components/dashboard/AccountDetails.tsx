@@ -145,13 +145,13 @@ export default function AccountDetails({
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className="px-4 py-3 bg-[#0a1628]/5 text-left text-xs font-medium text-[#0a2547] uppercase tracking-wider">
+                <th className="px-4 py-3 bg-[#0a1628]/5 text-left text-sm font-medium text-[#0a2547] uppercase tracking-wider">
                   Metric
                 </th>
                 {selectedQuarters.map(({ year, quarter }) => (
                   <th
                     key={`${year}-${quarter}`}
-                    className="px-4 py-3 bg-[#0a1628]/5 text-left text-xs font-medium text-[#0a2547] uppercase tracking-wider"
+                    className="px-4 py-3 bg-[#0a1628]/5 text-left text-sm font-medium text-[#0a2547] uppercase tracking-wider"
                   >
                     Q{quarter} {year}
                   </th>
@@ -161,13 +161,13 @@ export default function AccountDetails({
             <tbody className="bg-white divide-y divide-gray-200">
               {accountMetrics.map(({ label, prefix }) => (
                 <tr key={prefix} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-base font-medium text-gray-900">
                     {label}
                   </td>
                   {selectedQuarters.map(({ year, quarter }) => (
                     <td
                       key={`${prefix}-${year}-${quarter}`}
-                      className="px-4 py-4 whitespace-nowrap text-sm text-gray-900"
+                      className="px-4 py-4 whitespace-nowrap text-base text-gray-900"
                     >
                       {formatCurrency(companyData[`${prefix}_q${quarter}_${year}`] || 0)}
                     </td>
