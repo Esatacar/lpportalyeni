@@ -65,14 +65,16 @@ In the meantime, you can sign in to check your approval status.`);
   return (
     <div className="min-h-screen flex">
       {/* Left panel - dark navy with logo */}
-      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] flex-col items-center justify-center p-10">
+      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] flex-col items-center justify-start pt-16 p-10">
         <div className="flex flex-col items-center w-full">
           <img
             src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
             alt="e2vc"
             className="w-[768px]"
           />
-          <h2 className="text-white text-6xl font-bold mt-8 font-sans">Fund II LP Portal</h2>
+          <h2 className="text-white text-6xl font-bold mt-8 font-sans text-center leading-tight">
+            Fund II<br />LP Portal
+          </h2>
         </div>
       </div>
 
