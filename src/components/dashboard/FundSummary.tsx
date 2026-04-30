@@ -92,20 +92,8 @@ export default function FundSummary({
     return availableQuarters.length > 0 ? availableQuarters : [1];
   };
 
-  const getColorClass = (color: string) => {
-    const colorMap: Record<string, { bg: string, text: string, border: string }> = {
-      blue: { bg: 'bg-[#0a1628]/5', text: 'text-[#0a2547]', border: 'border-[#0a2547]/15' },
-      purple: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
-      green: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-      orange: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-      indigo: { bg: 'bg-[#0a1628]/5', text: 'text-[#0a2547]', border: 'border-[#0a2547]/15' },
-      pink: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
-      yellow: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
-      red: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
-      teal: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
-      gray: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' }
-    };
-    return colorMap[color];
+  const getColorClass = (_color: string) => {
+    return { bg: 'bg-[#0a1628]/5', text: 'text-[#0a2547]', border: 'border-[#0a2547]/15' };
   };
 
   const getPerformanceData = () => {
