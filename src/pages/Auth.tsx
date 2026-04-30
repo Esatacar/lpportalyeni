@@ -65,7 +65,7 @@ In the meantime, you can sign in to check your approval status.`);
   return (
     <div className="min-h-screen flex">
       {/* Left panel - dark navy with logo */}
-      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] flex-col items-start justify-start p-10">
+      <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] flex-col items-center justify-center p-10">
         <div className="flex flex-col items-center w-full">
           <img
             src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
