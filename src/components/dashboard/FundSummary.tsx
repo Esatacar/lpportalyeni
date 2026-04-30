@@ -92,21 +92,6 @@ export default function FundSummary({
     return availableQuarters.length > 0 ? availableQuarters : [1];
   };
 
-  const getColorClass = (color: string) => {
-    const colorMap: Record<string, { bg: string, text: string, border: string }> = {
-      blue: { bg: 'bg-[#0a1628]/5', text: 'text-[#0a2547]', border: 'border-[#0a2547]/15' },
-      purple: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
-      green: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-      orange: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-      indigo: { bg: 'bg-[#0a1628]/5', text: 'text-[#0a2547]', border: 'border-[#0a2547]/15' },
-      pink: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
-      yellow: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
-      red: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
-      teal: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
-      gray: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' }
-    };
-    return colorMap[color];
-  };
 
   const getPerformanceData = () => {
     if (!fundLevelData) return [];
@@ -207,22 +192,34 @@ export default function FundSummary({
         </div>
       </div>
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-          {metrics.map(({ label, prefix, icon: Icon, color }) => {
-            const colorClasses = getColorClass(color);
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-8">
+          {metrics.map(({ label, prefix }, index) => {
+            const accentColors = [
+              'from-[#6dd8b0] to-[#4fc49a]',
+              'from-[#0a2547] to-[#132f55]',
+              'from-[#6dd8b0] to-[#4fc49a]',
+              'from-[#0a2547] to-[#132f55]',
+              'from-[#6dd8b0] to-[#4fc49a]',
+              'from-[#0a2547] to-[#132f55]',
+              'from-[#6dd8b0] to-[#4fc49a]',
+              'from-[#0a2547] to-[#132f55]',
+              'from-[#6dd8b0] to-[#4fc49a]',
+              'from-[#0a2547] to-[#132f55]',
+            ];
+            const isDark = index % 2 === 1;
             return (
               <div
                 key={prefix}
-                className={`p-4 rounded-lg border ${colorClasses.border} ${colorClasses.bg}`}
+                className={`relative p-5 rounded-xl bg-gradient-to-br ${accentColors[index]} overflow-hidden group hover:scale-[1.02] transition-transform duration-200`}
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className={`text-sm font-medium ${colorClasses.text}`}>{label}</p>
-                    <p className="mt-2 text-2xl font-bold text-gray-900">
-                      {getValue(prefix)}
-                    </p>
-                  </div>
-                  <Icon className={`h-5 w-5 ${colorClasses.text}`} />
+                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_white_0%,_transparent_60%)]" />
+                <div className="relative">
+                  <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-[#0a2547]/70'}`}>
+                    {label}
+                  </p>
+                  <p className={`mt-2 text-xl font-bold ${isDark ? 'text-white' : 'text-[#0a1628]'}`}>
+                    {getValue(prefix)}
+                  </p>
                 </div>
               </div>
             );
