@@ -370,7 +370,7 @@ export default function LPDashboard() {
               <img
                 src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
                 alt="e2vc"
-                className="h-10 object-contain"
+                className="h-10 object-contain scale-[4] origin-center"
               />
             </div>
             <div className="flex justify-end">
