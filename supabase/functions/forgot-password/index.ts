@@ -181,6 +181,8 @@ Deno.serve(async (req: Request) => {
         "This code expires in 15 minutes.",
         "",
         "If you did not request this, please contact e2vc team.",
+        "Best regards,",
+        "e2vc Team",
       ].join("\n"),
     });
 
