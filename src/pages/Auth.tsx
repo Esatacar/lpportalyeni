@@ -66,12 +66,14 @@ In the meantime, you can sign in to check your approval status.`);
     <div className="min-h-screen flex">
       {/* Left panel - dark navy with logo */}
       <div className="hidden lg:flex lg:w-[45%] bg-[#0a1628] flex-col items-start justify-start p-10">
-        <img
-          src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
-          alt="e2vc"
-          className="w-[768px]"
-        />
-        <h2 className="text-white text-3xl font-light mt-6 tracking-wide">Fund II LP Portal</h2>
+        <div className="flex flex-col items-center w-full">
+          <img
+            src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
+            alt="e2vc"
+            className="w-[768px]"
+          />
+          <h2 className="text-white text-6xl font-bold mt-8 font-sans">Fund II LP Portal</h2>
+        </div>
       </div>
 
       {/* Right panel - light gray with form */}
