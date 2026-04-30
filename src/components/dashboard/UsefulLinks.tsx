@@ -21,12 +21,12 @@ interface UsefulLinksProps {
   onReorder?: (links: UsefulLink[]) => void;
 }
 
-function SortableLink({ 
-  link, 
-  isAdmin, 
-  onEdit, 
-  onDelete 
-}: { 
+function SortableLink({
+  link,
+  isAdmin,
+  onEdit,
+  onDelete
+}: {
   link: UsefulLink;
   isAdmin: boolean;
   onEdit?: (link: UsefulLink) => void;
@@ -49,56 +49,46 @@ function SortableLink({
   };
 
   return (
-    <div 
+    <div
       ref={setNodeRef}
       style={style}
-      className={`p-4 border border-gray-100 rounded-lg hover:bg-[#0a1628]/[0.02] transition-colors ${isDragging ? 'shadow-lg' : ''}`}
+      className={`group relative flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-[#0a2547]/30 hover:bg-[#0a1628]/[0.02] transition-all ${isDragging ? 'shadow-lg' : ''}`}
     >
-      <div className="flex items-start">
-        {isAdmin && (
+      {isAdmin && (
+        <button
+          className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+      )}
+      <a
+        href={link.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1.5 text-sm font-medium text-[#0a2547] hover:text-[#6dd8b0] transition-colors truncate"
+        title={link.description || link.title}
+      >
+        <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60" />
+        <span className="truncate">{link.title}</span>
+      </a>
+      {isAdmin && (
+        <div className="hidden group-hover:flex items-center gap-1 ml-auto shrink-0">
           <button
-            className="mr-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
-            {...attributes}
-            {...listeners}
+            onClick={() => onEdit?.(link)}
+            className="text-xs text-gray-400 hover:text-blue-600 px-1"
           >
-            <GripVertical className="h-5 w-5" />
+            Edit
           </button>
-        )}
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div>
-              <a
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lg font-medium text-[#0a2547] hover:text-[#6dd8b0] flex items-center transition-colors"
-              >
-                {link.title}
-                <ExternalLink className="h-4 w-4 ml-1" />
-              </a>
-              {link.description && (
-                <p className="mt-1 text-gray-600">{link.description}</p>
-              )}
-            </div>
-            {isAdmin && (
-              <div className="flex space-x-2 ml-4">
-                <button
-                  onClick={() => onEdit?.(link)}
-                  className="text-gray-600 hover:text-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => onDelete?.(link.id)}
-                  className="text-gray-600 hover:text-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => onDelete?.(link.id)}
+            className="text-xs text-gray-400 hover:text-red-600 px-1"
+          >
+            Del
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -157,9 +147,9 @@ export default function UsefulLinks({
           )}
         </div>
       </div>
-      <div className="p-6">
+      <div className="p-4">
         {links.length === 0 ? (
-          <p className="text-center text-gray-500">No links available</p>
+          <p className="text-center text-gray-500 text-sm py-2">No links available</p>
         ) : (
           <DndContext
             sensors={sensors}
@@ -170,7 +160,7 @@ export default function UsefulLinks({
               items={links.map(link => link.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
                 {links.map((link) => (
                   <SortableLink
                     key={link.id}
