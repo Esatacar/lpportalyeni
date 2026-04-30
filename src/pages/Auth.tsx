@@ -75,8 +75,8 @@ In the meantime, you can sign in to check your approval status.`);
             style={{ display: 'block', maxHeight: 'none', height: 'auto' }}
           />
           <div className="text-center -mt-10">
-            <p className="text-[#6dd8b0] text-5xl font-semibold tracking-[0.3em] uppercase mb-3">Investor Portal</p>
-            <h2 className="text-white text-3xl font-bold tracking-tight">Fund II</h2>
+            <p className="text-[#6dd8b0] text-3xl font-semibold tracking-[0.3em] uppercase mb-3">Investor Portal</p>
+            <h2 className="text-white text-5xl font-bold tracking-tight">Fund II</h2>
           </div>
         </div>
       </div>
