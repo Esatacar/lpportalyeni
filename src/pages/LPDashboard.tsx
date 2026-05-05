@@ -212,16 +212,11 @@ export default function LPDashboard() {
       const { data, error } = await supabase
         .from('fund_level')
         .select('*')
-        .single();
-      
-      if (error) {
-        if (error.code === 'PGRST116') {
-          setFundLevelData(null);
-          return;
-        }
-        throw error;
-      }
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
+      if (error) throw error;
       setFundLevelData(data);
     } catch (error) {
       console.error('Error fetching fund level data:', error);
@@ -233,16 +228,10 @@ export default function LPDashboard() {
       const { data, error } = await supabase
         .from('company_data')
         .select('*')
-        .single();
-      
-      if (error) {
-        if (error.code === 'PGRST116') {
-          setCompanyData(null);
-          return;
-        }
-        throw error;
-      }
+        .limit(1)
+        .maybeSingle();
 
+      if (error) throw error;
       setCompanyData(data);
     } catch (error) {
       console.error('Error fetching investor data:', error);
