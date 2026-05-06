@@ -2,9 +2,9 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useAuthSecurity } from './hooks/useAuthSecurity';
+import Auth from './pages/Auth';
 
-// Lazy load pages
-const Auth = React.lazy(() => import('./pages/Auth'));
+// Lazy load pages that require authentication
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const LPDashboard = React.lazy(() => import('./pages/LPDashboard'));
 
