@@ -121,11 +121,24 @@ export default function FundLevelDataEntry({ onDataSaved, availableYears }: Fund
       });
 
       if (fundId) {
-        const { error } = await supabase.rpc('bulk_update_fund_metrics', {
-          p_fund_id: fundId,
-          p_updates: updatePayload,
-        });
-        if (error) throw error;
+        const { data: { session } } = await supabase.auth.getSession();
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bulk-update`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({
+              type: 'fund_metrics',
+              p_fund_id: fundId,
+              p_updates: updatePayload,
+            }),
+          }
+        );
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error);
       } else {
         updatePayload['updated_at' as any] = new Date().toISOString() as any;
         const { data, error } = await supabase

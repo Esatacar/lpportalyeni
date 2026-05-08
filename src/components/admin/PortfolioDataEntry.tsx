@@ -241,11 +241,24 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
         return { id: company.id, value: numValue };
       });
 
-      const { error } = await supabase.rpc('bulk_update_portfolio_metric', {
-        p_column_key: columnKey,
-        p_updates: updates,
-      });
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bulk-update`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            type: 'portfolio_metric',
+            p_column_key: columnKey,
+            p_updates: updates,
+          }),
+        }
+      );
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
 
       setSaveStatus('success');
       onDataSaved?.();
