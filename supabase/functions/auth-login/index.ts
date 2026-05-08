@@ -23,7 +23,16 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    // Auth client for signInWithPassword (its context changes after login)
+    const authClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    // Admin client for privileged operations (stays as service_role)
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -33,7 +42,7 @@ Deno.serve(async (req: Request) => {
     const { email, password }: LoginRequest = await req.json();
 
     // Step 1: Authenticate user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await authClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -49,7 +58,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Step 2: Check if user has been rejected by admin
-    const { data: statusCheck } = await supabase
+    const { data: statusCheck } = await adminClient
       .from('profiles')
       .select('status')
       .eq('id', authData.user.id)
@@ -66,7 +75,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Step 3: Increment session version to invalidate old tokens
-    const { data: versionData, error: versionError } = await supabase
+    const { data: versionData, error: versionError } = await adminClient
       .rpc('increment_session_version', { user_id: authData.user.id });
 
     if (versionError) {
@@ -82,8 +91,8 @@ Deno.serve(async (req: Request) => {
 
     const newSessionVersion = versionData;
 
-    // Step 3: Update user metadata with new session version
-    const { error: updateError } = await supabase.auth.admin.updateUserById(
+    // Step 4: Update user metadata with new session version
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(
       authData.user.id,
       {
         app_metadata: {
@@ -103,8 +112,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Step 4: Get user profile directly from database (bypass RLS with raw query)
-    const { data: profileData, error: profileError } = await supabase
+    // Step 5: Get user profile directly from database (bypass RLS with raw query)
+    const { data: profileData, error: profileError } = await adminClient
       .rpc('get_profile_by_id', { profile_id: authData.user.id });
 
     if (profileError || !profileData || profileData.length === 0) {
