@@ -48,7 +48,24 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Step 2: Increment session version to invalidate old tokens
+    // Step 2: Check if user has been rejected by admin
+    const { data: statusCheck } = await supabase
+      .from('profiles')
+      .select('status')
+      .eq('id', authData.user.id)
+      .maybeSingle();
+
+    if (statusCheck?.status === 'rejected') {
+      return new Response(
+        JSON.stringify({ error: 'Your account has been rejected. Please contact the admin for assistance.' }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Step 3: Increment session version to invalidate old tokens
     const { data: versionData, error: versionError } = await supabase
       .rpc('increment_session_version', { user_id: authData.user.id });
 

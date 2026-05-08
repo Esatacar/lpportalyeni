@@ -63,6 +63,23 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Check if user has been rejected by admin
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile?.status === "rejected") {
+      return new Response(
+        JSON.stringify({ error: "Your account has been rejected. Please contact the admin for assistance." }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     if (type === "reset") {
       if (!new_password || new_password.length < 6) {
         return new Response(
