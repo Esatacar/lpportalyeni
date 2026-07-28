@@ -50,9 +50,17 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Client that carries the user's JWT so auth.uid() resolves inside SECURITY DEFINER functions
+    const userRpcClient = createClient(supabaseUrl, anonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
       global: { headers: { Authorization: authHeader } },
+    });
+
+    // Service-role client for the admin profile lookup (bypasses RLS)
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
     const { data: profile } = await adminClient
@@ -77,21 +85,21 @@ Deno.serve(async (req: Request) => {
     let rpcError;
 
     if (type === "company_metric") {
-      const { data, error } = await adminClient.rpc(
+      const { data, error } = await userRpcClient.rpc(
         "bulk_update_company_metric",
         { p_column_key, p_updates }
       );
       result = data;
       rpcError = error;
     } else if (type === "portfolio_metric") {
-      const { data, error } = await adminClient.rpc(
+      const { data, error } = await userRpcClient.rpc(
         "bulk_update_portfolio_metric",
         { p_column_key, p_updates }
       );
       result = data;
       rpcError = error;
     } else if (type === "fund_metrics") {
-      const { data, error } = await adminClient.rpc(
+      const { data, error } = await userRpcClient.rpc(
         "bulk_update_fund_metrics",
         { p_fund_id, p_updates }
       );
