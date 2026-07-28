@@ -52,6 +52,7 @@ Deno.serve(async (req: Request) => {
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: authHeader } },
     });
 
     const { data: profile } = await adminClient
