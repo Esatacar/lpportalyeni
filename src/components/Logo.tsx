@@ -12,7 +12,7 @@ export default function Logo({ size = 'default' }: LogoProps) {
       <img
         src="/w4ltkzoyz3bns38jhlgx3h94zhqg.png"
         alt="e2vc"
-        className="h-10 object-contain scale-[4] origin-center"
+        className="h-10 object-contain scale-[4] origin-center brightness-0"
       />
     </div>
   );
