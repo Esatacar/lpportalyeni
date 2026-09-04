@@ -179,17 +179,31 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    const smtpUser = Deno.env.get("SMTP_USER");
+    const smtpPass = Deno.env.get("SMTP_PASS");
+
+    if (!smtpUser || !smtpPass) {
+      console.error("SMTP credentials are not configured");
+      return new Response(
+        JSON.stringify({ error: "Password reset service unavailable" }),
+        {
+          status: 503,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const client = new SMTPClient({
-      user: "esat@e2.vc",
-      password: "klno ryhj plag fejb",
+      user: smtpUser,
+      password: smtpPass,
       host: "smtp.gmail.com",
       ssl: true,
     });
 
     await client.sendAsync({
-      from: "esat@e2.vc",
+      from: smtpUser,
       to: email,
-      cc: "esat@e2.vc",
+      cc: smtpUser,
       subject: "Password Reset Code - e2vc LP Portal",
       text: [
         "You requested a password reset for the e2vc LP Portal.",
