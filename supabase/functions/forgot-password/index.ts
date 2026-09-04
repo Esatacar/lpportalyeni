@@ -36,10 +36,13 @@ Deno.serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { data: users, error: listError } =
-      await supabase.auth.admin.listUsers();
+    const normalizedEmail = email.trim().toLowerCase();
+    const { data: profiles, error: profileLookupError } = await supabase
+      .from("profiles")
+      .select("id, email, status")
+      .limit(1000);
 
-    if (listError) {
+    if (profileLookupError) {
       return new Response(
         JSON.stringify({ error: "Failed to process request" }),
         {
@@ -49,11 +52,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const user = users.users.find(
-      (u: any) => u.email?.toLowerCase() === email.toLowerCase()
+    const profile = profiles?.find(
+      (candidate: { email: string | null }) =>
+        candidate.email?.trim().toLowerCase() === normalizedEmail
     );
 
-    if (!user) {
+    if (!profile) {
       return new Response(
         JSON.stringify({ error: "No account found with this email address" }),
         {
@@ -63,12 +67,22 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    const { data: userData, error: userLookupError } =
+      await supabase.auth.admin.getUserById(profile.id);
+
+    if (userLookupError || !userData.user) {
+      return new Response(
+        JSON.stringify({ error: "Failed to process request" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const user = userData.user;
+
     // Check if user has been rejected by admin
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("status")
-      .eq("id", user.id)
-      .maybeSingle();
 
     if (profile?.status === "rejected") {
       return new Response(
