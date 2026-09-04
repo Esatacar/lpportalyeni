@@ -8,6 +8,7 @@ interface Profile {
   company_name: string | null;
   role: 'admin' | 'lp';
   is_approved: boolean;
+  assigned_company_id?: string;
 }
 
 interface AuthState {

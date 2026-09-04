@@ -128,8 +128,8 @@ In the meantime, you can sign in to check your approval status.`);
       return;
     }
 
-    if (resetData.newPassword.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (resetData.newPassword.length < 12) {
+      setError('Password must be at least 12 characters.');
       setLoading(false);
       return;
     }

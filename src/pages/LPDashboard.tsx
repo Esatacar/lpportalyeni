@@ -228,7 +228,7 @@ export default function LPDashboard() {
       const { data, error } = await supabase
         .from('company_data')
         .select('*')
-        .limit(1)
+        .eq('id', user?.assigned_company_id)
         .maybeSingle();
 
       if (error) throw error;

@@ -1,0 +1,20 @@
+[functions.auth-login]
+verify_jwt = false
+
+[functions.auth-signup]
+verify_jwt = false
+
+[functions.bulk-update]
+verify_jwt = false
+
+[functions.forgot-password]
+verify_jwt = false
+
+[functions.notify-approval]
+verify_jwt = false
+
+[functions.notify-signup]
+verify_jwt = false
+
+[functions.add-quarter]
+verify_jwt = false

@@ -1,4 +1,5 @@
 import { SMTPClient } from "npm:emailjs@4.0.3";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,62 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Missing authorization header" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Verify the caller is an authenticated admin
+    const userClient = createClient(supabaseUrl, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const {
+      data: { user },
+      error: authError,
+    } = await userClient.auth.getUser();
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("role, is_approved")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile || profile.role !== "admin" || !profile.is_approved) {
+      return new Response(
+        JSON.stringify({ error: "Admin access required" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const { record, old_record } = await req.json();
 
     if (!record || !record.email) {
@@ -28,7 +85,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Only send email if user was just approved (changed from not approved to approved)
     const wasApproved = old_record && !old_record.is_approved && record.is_approved;
     if (!wasApproved) {
       return new Response(
@@ -40,9 +96,22 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    const smtpUser = Deno.env.get("SMTP_USER");
+    const smtpPass = Deno.env.get("SMTP_PASS");
+
+    if (!smtpUser || !smtpPass) {
+      return new Response(
+        JSON.stringify({ error: "SMTP credentials not configured" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const client = new SMTPClient({
-      user: "esat@e2.vc",
-      password: "klno ryhj plag fejb",
+      user: smtpUser,
+      password: smtpPass,
       host: "smtp.gmail.com",
       ssl: true,
     });
@@ -50,9 +119,9 @@ Deno.serve(async (req: Request) => {
     const userName = record.full_name || "Investor";
 
     await client.sendAsync({
-      from: "esat@e2.vc",
+      from: smtpUser,
       to: record.email,
-      cc: "esat@e2.vc",
+      cc: smtpUser,
       subject: "Your e2vc LP Portal Account Has Been Approved",
       text: [
         `Hi ${userName},`,
