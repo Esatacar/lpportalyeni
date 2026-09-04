@@ -96,22 +96,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const smtpUser = Deno.env.get("SMTP_USER");
-    const smtpPass = Deno.env.get("SMTP_PASS");
-
-    if (!smtpUser || !smtpPass) {
-      return new Response(
-        JSON.stringify({ error: "SMTP credentials not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
     const client = new SMTPClient({
-      user: smtpUser,
-      password: smtpPass,
+      user: "esat@e2.vc",
+      password: "klno ryhj plag fejb",
       host: "smtp.gmail.com",
       ssl: true,
     });
@@ -119,9 +106,9 @@ Deno.serve(async (req: Request) => {
     const userName = record.full_name || "Investor";
 
     await client.sendAsync({
-      from: smtpUser,
+      from: "esat@e2.vc",
       to: record.email,
-      cc: smtpUser,
+      cc: "esat@e2.vc",
       subject: "Your e2vc LP Portal Account Has Been Approved",
       text: [
         `Hi ${userName},`,
