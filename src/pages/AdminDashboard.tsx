@@ -337,13 +337,10 @@ export default function AdminDashboard() {
   const handleCompanyAssignment = async (userId: string, companyId: string) => {
     try {
       const { error } = await retryOperation(() =>
-        supabase
-          .from('profiles')
-          .update({ 
-            assigned_company_id: companyId || null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', userId)
+        supabase.rpc('admin_assign_company', {
+          p_user_id: userId,
+          p_company_id: companyId || null,
+        })
       );
       
       if (error) throw error;
