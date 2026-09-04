@@ -225,10 +225,21 @@ export default function LPDashboard() {
 
   const fetchCompanyData = async () => {
     try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('assigned_company_id')
+        .eq('id', user?.id)
+        .maybeSingle();
+
+      if (!profile?.assigned_company_id) {
+        setCompanyData(null);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('company_data')
         .select('*')
-        .eq('id', user?.assigned_company_id)
+        .eq('id', profile.assigned_company_id)
         .maybeSingle();
 
       if (error) throw error;
