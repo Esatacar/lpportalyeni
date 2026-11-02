@@ -154,7 +154,7 @@ export default function PortfolioDataEntry({ onDataSaved, availableYears }: Port
       .map(cell => cell.trim())
       .filter(cell => cell !== '');
 
-    if (lines.length <= 1) return;
+    if (lines.length === 0) return;
 
     e.preventDefault();
 

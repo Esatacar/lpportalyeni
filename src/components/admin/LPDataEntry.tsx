@@ -133,7 +133,7 @@ export default function LPDataEntry({ onDataSaved, availableYears }: LPDataEntry
       .map(cell => cell.trim())
       .filter(cell => cell !== '');
 
-    if (lines.length <= 1) return;
+    if (lines.length === 0) return;
 
     e.preventDefault();
 
